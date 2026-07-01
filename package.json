@@ -1,0 +1,19 @@
+{
+  "name": "timezones",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "benchcpu": "node --experimental-strip-types scripts/benchcpu.ts",
+    "benchmem": "node --expose-gc --experimental-strip-types scripts/benchmem.ts",
+    "build": "node --experimental-strip-types scripts/generate-abbreviations.ts && tsc -p tsconfig.json",
+    "generate": "node --experimental-strip-types scripts/generate-abbreviations.ts",
+    "test": "node --experimental-strip-types --test test/timezones.test.ts"
+  },
+  "devDependencies": {
+    "tinybench": "^6.0.2",
+    "typescript": "^6.0.3"
+  }
+}

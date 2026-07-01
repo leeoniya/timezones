@@ -1,0 +1,18 @@
+{
+  "lockfileVersion": 2,
+  "configVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "timezones",
+      "devDependencies": {
+        "tinybench": "^6.0.2",
+        "typescript": "^6.0.3",
+      },
+    },
+  },
+  "packages": {
+    "tinybench": ["tinybench@6.0.2", "", {}, "sha512-FlHoQpcFvCzeXK5kVPvV7IVgW/hs/B36QWTz876iSdeJguBDfdTSRQmYmaHX+fQNt4hp+gEFB2XXw+8hT4/y8A=="],
+
+    "typescript": ["typescript@6.0.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw=="],
+  }
+}

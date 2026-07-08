@@ -1,12 +1,37 @@
 import { execFileSync } from "node:child_process";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { TIME_ZONE_ALIAS_GROUPS } from "./timezone-aliases.ts";
 
 export type TimeZoneAbbreviationEntry = Record<string, string>;
 export type TimeZoneAbbreviations = Record<string, TimeZoneAbbreviationEntry>;
+export interface TimeZoneSampleVariant {
+  abbreviation: string;
+  offset: string;
+}
+export interface IanaTzdbResolver {
+  version: string;
+  resolveVariant: (date: Date, timeZone: string) => TimeZoneSampleVariant;
+  dispose: () => void;
+}
 
 const LOCALE = "en-US";
-const SHORT_OFFSET_PATTERN = /\b(?:GMT|UTC)(?<sign>[+-])(?<hours>\d{1,2})(?::(?<minutes>\d{2}))?\b/;
+export const IANA_TZDB_SOURCE_FILES = [
+  "africa",
+  "antarctica",
+  "asia",
+  "australasia",
+  "europe",
+  "northamerica",
+  "southamerica",
+  "etcetera",
+  "factory",
+  "backward",
+  "backzone",
+] as const;
 
 export function getSampleDates(year: number): Date[] {
   return [
@@ -19,8 +44,11 @@ export function shouldIncludeTimeZone(timeZone: string): boolean {
   return !/^Etc\/GMT[+-]\d+$/.test(timeZone);
 }
 
-export function addAliasEntries(entries: TimeZoneAbbreviations): void {
-  for (const aliases of TIME_ZONE_ALIAS_GROUPS) {
+export function addAliasEntries(
+  entries: TimeZoneAbbreviations,
+  aliasGroups: readonly (readonly string[])[] = TIME_ZONE_ALIAS_GROUPS,
+): void {
+  for (const aliases of aliasGroups) {
     const source = aliases.find((timeZone) => entries[timeZone]);
 
     if (!source) {
@@ -35,11 +63,12 @@ export function addAliasEntries(entries: TimeZoneAbbreviations): void {
   }
 }
 
-export function createEntry(timeZone: string, sampleDates: Date[]): TimeZoneAbbreviationEntry {
-  const variants = sampleDates.map((date) => ({
-    abbreviation: getCommonTimeZoneAbbreviation(date, timeZone),
-    offset: getOffset(date, timeZone),
-  }));
+export function createEntry(
+  timeZone: string,
+  sampleDates: Date[],
+  resolveVariant: (date: Date, timeZone: string) => TimeZoneSampleVariant,
+): TimeZoneAbbreviationEntry {
+  const variants = sampleDates.map((date) => resolveVariant(date, timeZone));
 
   return Object.fromEntries(
     variants.map((variant) => [variant.offset, variant.abbreviation]),
@@ -74,72 +103,90 @@ function isAcceptedTimeZone(timeZone: string): boolean {
   }
 }
 
-function getCommonTimeZoneAbbreviation(date: Date, timeZone: string): string {
-  return getSystemTimeZoneAbbreviation(date, timeZone) ?? getShortTimeZoneName(date, timeZone);
+export function createIanaTzdbResolver(): IanaTzdbResolver {
+  const { version, sourcePaths } = getPinnedTzdbSourceData();
+  const workingDir = mkdtempSync(join(tmpdir(), "timezones-tzdb-"));
+  const zoneInfoDir = join(workingDir, "zoneinfo");
+
+  mkdirSync(zoneInfoDir, { recursive: true });
+
+  try {
+    execFileSync("zic", ["-d", zoneInfoDir, ...sourcePaths], {
+      encoding: "utf8",
+      stdio: ["ignore", "ignore", "pipe"],
+    });
+  } catch (error) {
+    rmSync(workingDir, { recursive: true, force: true });
+
+    throw new Error(
+      "Unable to compile pinned IANA tzdb data. Ensure `zic` is installed and run `npm run generate` (or `npm run update-tzdb`).",
+      { cause: error },
+    );
+  }
+
+  return {
+    version,
+    resolveVariant: (date, timeZone) => getIanaVariant(date, timeZone, zoneInfoDir),
+    dispose: () => {
+      rmSync(workingDir, { recursive: true, force: true });
+    },
+  };
 }
 
-function getSystemTimeZoneAbbreviation(date: Date, timeZone: string): string | undefined {
+function getIanaVariant(date: Date, timeZone: string, zoneInfoDir: string): TimeZoneSampleVariant {
+  let output: string;
+
   try {
-    return execFileSync("date", ["-d", `@${Math.floor(date.getTime() / 1000)}`, "+%Z"], {
+    output = execFileSync("date", ["-d", `@${Math.floor(date.getTime() / 1000)}`, "+%:z %Z"], {
       encoding: "utf8",
       env: {
         ...process.env,
+        TZDIR: zoneInfoDir,
         TZ: timeZone,
       },
       stdio: ["ignore", "pipe", "ignore"],
     }).trim();
-  } catch {
-    return undefined;
+  } catch (error) {
+    throw new Error(`Unable to read abbreviation for "${timeZone}" from pinned IANA tzdb.`, {
+      cause: error,
+    });
   }
+
+  const [offset, abbreviation] = output.split(/\s+/, 2);
+
+  if (!offset || !abbreviation) {
+    throw new Error(`Unable to parse IANA tzdb output "${output}" for "${timeZone}".`);
+  }
+
+  return { abbreviation, offset };
 }
 
-function getShortTimeZoneName(date: Date, timeZone: string): string {
-  return getTimeZoneNamePart(
-    new Intl.DateTimeFormat(LOCALE, {
-      timeZone,
-      timeZoneName: "short",
-    }),
-    date,
-  );
-}
+function getPinnedTzdbSourceData(): { version: string; sourcePaths: string[] } {
+  const versionFilePath = fileURLToPath(new URL("./tzdb/version.txt", import.meta.url));
 
-function getOffset(date: Date, timeZone: string): string {
-  return parseShortOffset(getShortOffsetName(date, timeZone));
-}
+  if (!existsSync(versionFilePath)) {
+    throw new Error("Pinned IANA tzdb is missing. Run `npm run generate` (or `npm run update-tzdb`).");
+  }
 
-function getShortOffsetName(date: Date, timeZone: string): string {
-  return new Intl.DateTimeFormat(LOCALE, {
-    timeZone,
-    timeZoneName: "shortOffset",
-  }).format(date);
-}
+  const version = readFileSync(versionFilePath, "utf8").trim();
 
-function getTimeZoneNamePart(formatter: Intl.DateTimeFormat, date: Date): string {
-  return formatter.formatToParts(date).find((part) => part.type === "timeZoneName")?.value ?? "";
-}
+  if (!version) {
+    throw new Error(
+      "Pinned IANA tzdb version file is empty. Run `npm run generate` (or `npm run update-tzdb`).",
+    );
+  }
 
-function parseShortOffset(formatted: string): string {
-  const match = SHORT_OFFSET_PATTERN.exec(formatted);
+  const sourcePaths = IANA_TZDB_SOURCE_FILES.map((name) => {
+    const sourcePath = fileURLToPath(new URL(`./tzdb/data/${name}`, import.meta.url));
 
-  if (!match?.groups) {
-    if (/\b(?:GMT|UTC)\b/.test(formatted)) {
-      return "+00:00";
+    if (!existsSync(sourcePath)) {
+      throw new Error(
+        `Pinned IANA tzdb source file "${name}" is missing. Run \`npm run generate\` (or \`npm run update-tzdb\`).`,
+      );
     }
 
-    throw new Error(`Unable to parse UTC offset from "${formatted}".`);
-  }
+    return sourcePath;
+  });
 
-  if (match.groups.hours === "0" && !match.groups.minutes) {
-    return "+00:00";
-  }
-
-  const sign = match.groups.sign;
-  const hours = Number(match.groups.hours);
-  const minutes = Number(match.groups.minutes ?? "0");
-
-  return `${sign}${pad2(hours)}:${pad2(minutes)}`;
-}
-
-function pad2(value: number): string {
-  return String(value).padStart(2, "0");
+  return { version, sourcePaths };
 }

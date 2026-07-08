@@ -53,28 +53,34 @@ approximate option.
 ## Performance Notes
 
 The utility uses a generated current-ish offset-to-abbreviation lookup in
-`src/timezone-abbreviations.ts`. The generator prefers system tzdata
-abbreviations, such as `NZST`/`NZDT` and `AEST`/`AEDT`, and falls back to
-`Intl` only while generating if the system lookup is unavailable. At runtime the
-utility uses the generated table for the time zone list and abbreviations. It
-still asks `Intl` for the UTC offset at the requested timestamp, then picks the
-matching abbreviation from the static table.
+`src/timezone-abbreviations.ts`. The generator uses pinned IANA tzdb source
+data in `scripts/tzdb/data` and compiles it with `zic` before extracting
+abbreviations (for example `NZST`/`NZDT`, `AEST`/`AEDT`).
+
+At runtime the utility uses the generated table for the time zone list and
+abbreviations. It still asks `Intl` for the UTC offset at the requested
+timestamp, then picks the matching abbreviation from the static table.
 
 This avoids formatting localized short names for every zone on every call while
 still letting the timestamp decide whether the zone is on standard time or
 daylight time. If the runtime's current tzdata no longer matches the generated
 table, the utility falls back to the first generated abbreviation for that zone.
 
-Regenerate the table after runtime or tzdata updates:
+Refresh tzdb data and regenerate:
 
 ```sh
 npm run generate
 ```
 
+The generator also refreshes `scripts/timezone-aliases.ts` from pinned tzdb link
+data so canonical names missing from `Intl.supportedValuesOf("timeZone")` are
+kept in sync with supported aliases.
+
 ## Scripts
 
 ```sh
 npm install --ignore-scripts
+npm run generate
 npm run build
 npm test
 ```

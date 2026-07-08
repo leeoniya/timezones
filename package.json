@@ -8,8 +8,9 @@
   "scripts": {
     "benchcpu": "node --experimental-strip-types scripts/benchcpu.ts",
     "benchmem": "node --expose-gc --experimental-strip-types scripts/benchmem.ts",
-    "build": "node --experimental-strip-types scripts/generate-abbreviations.ts && tsc -p tsconfig.json",
-    "generate": "node --experimental-strip-types scripts/generate-abbreviations.ts",
+    "build": "tsc -p tsconfig.json",
+    "generate": "node --experimental-strip-types scripts/update-tzdb.ts && node --experimental-strip-types scripts/generate-abbreviations.ts",
+    "update-tzdb": "node --experimental-strip-types scripts/update-tzdb.ts",
     "test": "node --experimental-strip-types --test test/timezones.test.ts"
   },
   "devDependencies": {

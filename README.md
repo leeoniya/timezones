@@ -99,3 +99,33 @@ npm run generate
 npm run build
 npm test
 ```
+
+### Benchmark snapshot
+
+Current benchmark output (Node `v26.4.0`, Linux, [AMD Ryzen 7 PRO 5850U](https://www.cpubenchmark.net/cpu.php?id=4198), `419` zones, `50` iterations):
+
+- CPU cold full list:
+  - `conservative`: `73.967 ms`
+  - `balanced`: `12.112 ms` (~`6.1x` faster)
+  - `fastest`: `4.669 ms` (~`15.8x` faster)
+- CPU warm changing timestamp (avg):
+  - `conservative`: `1.502 ms`
+  - `balanced`: `1.244 ms` (~`1.21x` faster)
+  - `fastest`: `0.446 ms` (~`3.37x` faster)
+- Formatter cache size:
+  - `conservative`: `419` formatters
+  - `balanced`: `86` formatters
+  - `fastest`: `27` formatters
+- RSS memory delta after cache creation:
+  - `conservative`: `20.62 MiB`
+  - `balanced`: `11.00 MiB`
+  - `fastest`: `9.81 MiB`
+
+Reproduce locally:
+
+```sh
+npm run benchcpu
+npm run benchmem
+```
+
+Numbers vary by CPU, libc/ICU, Node version, and active system load.

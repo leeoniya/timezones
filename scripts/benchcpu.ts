@@ -40,9 +40,6 @@ for (const strategy of strategies) {
   changingTimestampIndexes.set(strategy, 0);
 
   bench
-    .add(`${strategy} warm same timestamp`, () => {
-      sink += listTimeZonesAt(timestamp, strategy).length;
-    })
     .add(`${strategy} warm changing timestamp`, () => {
       const index = changingTimestampIndexes.get(strategy) ?? 0;
       const timestampMs = start + index * 60 * 60 * 1000;

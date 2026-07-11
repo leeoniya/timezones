@@ -21,8 +21,12 @@ const balancedOffsetFormatterCache = new Map<string, Intl.DateTimeFormat>();
 const fastestOffsetFormatterCache = new Map<string, Intl.DateTimeFormat>();
 const GENERATED_TIME_ZONE_LOOKUP = TIME_ZONE_ABBREVIATIONS as Record<string, TimeZoneAbbreviationEntry>;
 const TIME_ZONE_LOOKUP = createSupportedTimeZoneLookup();
+const MS_PER_HOUR = 60 * 60 * 1000;
 let balancedRepresentatives: ReadonlyMap<string, string> | undefined;
 let fastestRepresentatives: ReadonlyMap<string, string> | undefined;
+let cacheHour: number | undefined;
+let cacheStrategy: TimeZoneStrategy | undefined;
+let cacheTimeZones: TimeZoneInfo[] | undefined;
 
 /**
  * Returns all IANA time zones in the generated abbreviation lookup.
@@ -35,30 +39,41 @@ export function getAvailableTimeZones(): string[] {
  * Builds a snapshot of each time zone's short name and UTC offset at a
  * specific instant.
  */
-export function listTimeZonesAt(
+export function getTimeZonesAt(
   timestamp: number,
   strategy: TimeZoneStrategy = "conservative",
 ): TimeZoneInfo[] {
+  const hourBucket = Math.floor(timestamp / MS_PER_HOUR);
+
+  if (cacheHour === hourBucket && cacheStrategy === strategy && cacheTimeZones) {
+    return cacheTimeZones;
+  }
+
   const date = new Date(timestamp);
+  let timeZones: TimeZoneInfo[];
 
   if (strategy === "balanced") {
     balancedRepresentatives ??= createRepresentativeMap(() => true);
 
-    return listGroupedTimeZones(date, balancedRepresentatives, balancedOffsetFormatterCache, false);
-  }
-
-  if (strategy === "fastest") {
+    timeZones = listGroupedTimeZones(date, balancedRepresentatives, balancedOffsetFormatterCache, false);
+  } else if (strategy === "fastest") {
     fastestRepresentatives ??= createRepresentativeMap((entry) => Object.keys(entry).length > 1);
 
-    return listGroupedTimeZones(date, fastestRepresentatives, fastestOffsetFormatterCache, true);
+    timeZones = listGroupedTimeZones(date, fastestRepresentatives, fastestOffsetFormatterCache, true);
+  } else {
+    timeZones = getAvailableTimeZones().map((timeZone) => {
+      return createTimeZoneInfo(
+        timeZone,
+        getOffset(date, timeZone, conservativeOffsetFormatterCache),
+      );
+    });
   }
 
-  return getAvailableTimeZones().map((timeZone) => {
-    return createTimeZoneInfo(
-      timeZone,
-      getOffset(date, timeZone, conservativeOffsetFormatterCache),
-    );
-  });
+  cacheHour = hourBucket;
+  cacheStrategy = strategy;
+  cacheTimeZones = timeZones;
+
+  return timeZones;
 }
 
 function listGroupedTimeZones(

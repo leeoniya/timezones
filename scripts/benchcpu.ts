@@ -2,7 +2,7 @@ import { Bench } from "tinybench";
 
 import {
   getAvailableTimeZones,
-  listTimeZonesAt,
+  getTimeZonesAt,
   type TimeZoneStrategy,
 } from "../dist/timezones.js";
 
@@ -10,7 +10,9 @@ const iterations = Number.parseInt(process.argv[2] ?? "50", 10);
 const timestamp = Date.UTC(2026, 5, 30, 12);
 const zones = getAvailableTimeZones();
 const start = Date.UTC(2026, 0, 1, 0);
-const changingTimestampIndexes = new Map<TimeZoneStrategy, number>();
+const MS_PER_HOUR = 60 * 60 * 1000;
+const MS_PER_SECOND = 1000;
+const SECONDS_PER_HOUR = 60 * 60;
 let sink = 0;
 const strategies: TimeZoneStrategy[] = [
   "conservative",
@@ -22,8 +24,8 @@ console.log(`zones: ${zones.length}`);
 console.log(`iterations: ${iterations}`);
 
 for (const strategy of strategies) {
-  const cold = measure(() => listTimeZonesAt(timestamp, strategy));
-  const coldResult = listTimeZonesAt(timestamp, strategy);
+  const cold = measure(() => getTimeZonesAt(timestamp, strategy));
+  const coldResult = getTimeZonesAt(timestamp, strategy);
 
   console.log(`${strategy} cold full list: ${formatMs(cold)} ms`);
   console.log(`${strategy} result length: ${coldResult.length}`);
@@ -37,15 +39,20 @@ const bench = new Bench({
 });
 
 for (const strategy of strategies) {
-  changingTimestampIndexes.set(strategy, 0);
+  let missIndex = 0;
+  let hitIndex = 0;
 
   bench
-    .add(`${strategy} warm changing timestamp`, () => {
-      const index = changingTimestampIndexes.get(strategy) ?? 0;
-      const timestampMs = start + index * 60 * 60 * 1000;
-
-      changingTimestampIndexes.set(strategy, (index + 1) % iterations);
-      sink += listTimeZonesAt(timestampMs, strategy).length;
+    .add(`${strategy} warm within-hour cache hit`, () => {
+      const withinHourOffsetMs = (hitIndex % SECONDS_PER_HOUR) * MS_PER_SECOND;
+      const timestampMs = start + withinHourOffsetMs;
+      hitIndex = (hitIndex + 1) % iterations;
+      sink += getTimeZonesAt(timestampMs, strategy).length;
+    })
+    .add(`${strategy} warm forced cache miss`, () => {
+      const timestampMs = start + missIndex * MS_PER_HOUR;
+      missIndex = (missIndex + 1) % iterations;
+      sink += getTimeZonesAt(timestampMs, strategy).length;
     });
 }
 

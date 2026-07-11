@@ -105,17 +105,17 @@ npm test
 Current benchmark output (Node `v26.4.0`, Linux, [AMD Ryzen 7 PRO 5850U](https://www.cpubenchmark.net/cpu.php?id=4198), `419` zones, `50` iterations):
 
 - CPU cold full list:
-  - `conservative`: `72.773 ms`
-  - `balanced`: `13.737 ms` (~`5.30x` faster)
-  - `fastest`: `4.917 ms` (~`14.80x` faster)
+  - `conservative`: `63.474 ms`
+  - `balanced`: `12.479 ms` (~`5.09x` faster)
+  - `fastest`: `4.373 ms` (~`14.52x` faster)
 - CPU warm within-hour cache hit (avg):
-  - `conservative`: `0.050 ms`
-  - `balanced`: `0.032 ms` (~`1.56x` faster)
-  - `fastest`: `0.014 ms` (~`3.57x` faster)
+  - `conservative`: `0.041 ms`
+  - `balanced`: `0.031 ms` (~`1.32x` faster)
+  - `fastest`: `0.010 ms` (~`4.10x` faster)
 - CPU warm forced cache miss (avg):
-  - `conservative`: `1.657 ms`
-  - `balanced`: `1.749 ms` (~`1.06x` slower)
-  - `fastest`: `0.539 ms` (~`3.07x` faster)
+  - `conservative`: `1.673 ms`
+  - `balanced`: `1.256 ms` (~`1.33x` faster)
+  - `fastest`: `0.426 ms` (~`3.93x` faster)
 - Formatter cache size:
   - `conservative`: `419` formatters
   - `balanced`: `86` formatters
@@ -125,7 +125,7 @@ Current benchmark output (Node `v26.4.0`, Linux, [AMD Ryzen 7 PRO 5850U](https:/
   - `balanced`: `640.0 KiB`
   - `fastest`: `256.0 KiB`
 
-*Intl prewarm bootstrap adds a one-time per-process RSS overhead (about `23.44 MiB` on this machine), measured separately and excluded from the per-strategy cache-creation deltas above.*
+*Intl prewarm bootstrap adds a one-time per-process RSS overhead (about `23.38 MiB` on this machine), measured separately and excluded from the per-strategy cache-creation deltas above.*
 
 Reproduce locally:
 

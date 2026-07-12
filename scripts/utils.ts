@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+export type TimeZoneOffsetEntry = Record<string, string>;
 export type TimeZoneAbbreviationEntry = Record<string, string>;
 export type TimeZoneAbbreviations = Record<string, TimeZoneAbbreviationEntry>;
 export interface TimeZoneSampleVariant {
@@ -45,7 +46,7 @@ export function createEntry(
   timeZone: string,
   sampleDates: Date[],
   resolveVariant: (date: Date, timeZone: string) => TimeZoneSampleVariant,
-): TimeZoneAbbreviationEntry {
+): TimeZoneOffsetEntry {
   const variants = sampleDates.map((date) => resolveVariant(date, timeZone));
 
   return Object.fromEntries(
@@ -65,10 +66,11 @@ export function serializeEntries(
 
 export function serializeEntry(entry: TimeZoneAbbreviationEntry): string {
   const properties = Object.entries(entry)
-    .map(([offset, abbreviation]) => `${JSON.stringify(offset)}: ${JSON.stringify(abbreviation)}`)
-    .join(", ");
+    .map(([offset, abbreviation]) => {
+      return `${JSON.stringify(offset)}: ${JSON.stringify(abbreviation)}`;
+    });
 
-  return `{${properties}}`;
+  return `{${properties.join(", ")}}`;
 }
 
 export function createIanaTzdbResolver(): IanaTzdbResolver {

@@ -87,9 +87,12 @@ test("balanced and fastest strategies return matching current-ish values", () =>
   );
 });
 
-test("all strategies return identical results for monthly checkpoints in 2026", () => {
-  for (let month = 0; month < 12; month += 1) {
-    const timestamp = Date.UTC(2026, month, 1, 12);
+test("all strategies return identical results for weekly checkpoints in 2026", () => {
+  const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+  const START_OF_2026 = Date.UTC(2026, 0, 1);
+  const END_OF_2026 = Date.UTC(2027, 0, 1);
+
+  for (let timestamp = START_OF_2026; timestamp < END_OF_2026; timestamp += ONE_WEEK_MS) {
     const conservative = JSON.stringify(getTimeZonesAt(timestamp, "conservative"));
     const balanced = JSON.stringify(getTimeZonesAt(timestamp, "balanced"));
     const fastest = JSON.stringify(getTimeZonesAt(timestamp, "fastest"));

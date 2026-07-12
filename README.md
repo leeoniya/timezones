@@ -113,25 +113,25 @@ npm test
 Current benchmark output (Node `v26.4.0`, Linux, [AMD Ryzen 7 PRO 5850U](https://www.cpubenchmark.net/cpu.php?id=4198), `438` zones, `50` iterations):
 
 - CPU cold full list:
-  - `conservative`: `63.474 ms`
-  - `balanced`: `12.479 ms` (~`5.09x` faster)
-  - `fastest`: `4.373 ms` (~`14.52x` faster)
+  - `conservative`: `62.747 ms`
+  - `balanced`: `13.377 ms` (~`4.69x` faster)
+  - `fastest`: `5.526 ms` (~`11.35x` faster)
 - CPU warm within-hour cache hit (avg):
-  - `conservative`: `0.041 ms`
-  - `balanced`: `0.031 ms` (~`1.32x` faster)
-  - `fastest`: `0.010 ms` (~`4.10x` faster)
+  - `conservative`: `0.072 ms`
+  - `balanced`: `0.033 ms` (~`2.18x` faster)
+  - `fastest`: `0.012 ms` (~`6.00x` faster)
 - CPU warm forced cache miss (avg):
-  - `conservative`: `1.673 ms`
-  - `balanced`: `1.256 ms` (~`1.33x` faster)
-  - `fastest`: `0.426 ms` (~`3.93x` faster)
+  - `conservative`: `2.126 ms`
+  - `balanced`: `1.414 ms` (~`1.50x` faster)
+  - `fastest`: `0.519 ms` (~`4.10x` faster)
 - Formatter cache size:
   - `conservative`: `438` formatters
-  - `balanced`: `86` formatters
-  - `fastest`: `27` formatters
+  - `balanced`: `89` formatters
+  - `fastest`: `30` formatters
 - RSS memory delta after cache creation:
-  - `conservative`: `10.88 MiB`
-  - `balanced`: `1.00 MiB`
-  - `fastest`: `128.0 KiB`
+  - `conservative`: `11.00 MiB`
+  - `balanced`: `1.12 MiB`
+  - `fastest`: `256.0 KiB`
 
 *Intl prewarm bootstrap adds a one-time per-process RSS overhead (about `17.46 MiB` on this machine), measured separately and excluded from the per-strategy cache-creation deltas above.*
 

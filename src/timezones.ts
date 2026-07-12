@@ -93,11 +93,7 @@ function listGroupedTimeZones(
   useStaticSingleOffset: boolean,
 ): TimeZoneInfo[] {
   return getAvailableTimeZones().map((timeZone) => {
-    const entry = TIME_ZONE_LOOKUP[timeZone];
-
-    if (!entry) {
-      throw new Error(`No abbreviation entry found for time zone "${timeZone}".`);
-    }
+    const entry = TIME_ZONE_LOOKUP[timeZone]!;
 
     const offset =
       (useStaticSingleOffset ? getSingleStaticOffset(entry) : undefined) ??
@@ -111,15 +107,11 @@ function createTimeZoneInfo(
   timeZone: string,
   offset: string,
 ): TimeZoneInfo {
-  const entry = TIME_ZONE_LOOKUP[timeZone];
-
-  if (!entry) {
-    throw new Error(`No abbreviation entry found for time zone "${timeZone}".`);
-  }
+  const entry = TIME_ZONE_LOOKUP[timeZone]!;
 
   return {
     name: timeZone,
-    abbr: entry[offset] ?? Object.values(entry)[0] ?? "",
+    abbr: parseStoredAbbreviation(getStoredAbbreviation(entry, offset)),
     offset,
   };
 }
@@ -219,7 +211,13 @@ function getRepresentative(representatives: ReadonlyMap<string, string>, timeZon
 function getSingleStaticOffset(entry: TimeZoneAbbreviationEntry): string | undefined {
   const offsets = Object.keys(entry);
 
-  return offsets.length === 1 ? offsets[0] : undefined;
+  if (offsets.length !== 1) {
+    return undefined;
+  }
+
+  const firstOffset = offsets[0]!;
+
+  return entry[firstOffset]!.endsWith("/0") ? firstOffset : undefined;
 }
 
 function getOffset(
@@ -286,4 +284,27 @@ function parseShortOffset(formatted: string): string {
 
 function pad2(value: number): string {
   return String(value).padStart(2, "0");
+}
+
+function getStoredAbbreviation(entry: TimeZoneAbbreviationEntry, offset: string): string {
+  const exact = entry[offset];
+
+  if (exact) {
+    return exact;
+  }
+
+  for (const key of Object.keys(entry)) {
+    const fallback = entry[key];
+
+    if (fallback) {
+      return fallback;
+    }
+  }
+
+  return "";
+}
+
+function parseStoredAbbreviation(value: string): string {
+  const separatorIndex = value.lastIndexOf("/");
+  return value.slice(0, separatorIndex);
 }

@@ -5,9 +5,9 @@
     "": {
       "name": "timezones",
       "devDependencies": {
-        "@types/node": "latest",
-        "tinybench": "latest",
-        "typescript": "latest",
+        "@types/node": "^26.1.1",
+        "tinybench": "^6.0.2",
+        "typescript": "^7.0.2",
       },
     },
   },

@@ -4,8 +4,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { TIME_ZONE_ALIAS_GROUPS } from "./timezone-aliases.ts";
-
 export type TimeZoneAbbreviationEntry = Record<string, string>;
 export type TimeZoneAbbreviations = Record<string, TimeZoneAbbreviationEntry>;
 export interface TimeZoneSampleVariant {
@@ -18,7 +16,6 @@ export interface IanaTzdbResolver {
   dispose: () => void;
 }
 
-const LOCALE = "en-US";
 export const IANA_TZDB_SOURCE_FILES = [
   "africa",
   "antarctica",
@@ -42,25 +39,6 @@ export function getSampleDates(year: number): Date[] {
 
 export function shouldIncludeTimeZone(timeZone: string): boolean {
   return !/^Etc\/GMT[+-]\d+$/.test(timeZone);
-}
-
-export function addAliasEntries(
-  entries: TimeZoneAbbreviations,
-  aliasGroups: readonly (readonly string[])[] = TIME_ZONE_ALIAS_GROUPS,
-): void {
-  for (const aliases of aliasGroups) {
-    const source = aliases.find((timeZone) => entries[timeZone]);
-
-    if (!source) {
-      continue;
-    }
-
-    for (const alias of aliases) {
-      if (!entries[alias] && isAcceptedTimeZone(alias)) {
-        entries[alias] = entries[source];
-      }
-    }
-  }
 }
 
 export function createEntry(
@@ -91,16 +69,6 @@ export function serializeEntry(entry: TimeZoneAbbreviationEntry): string {
     .join(", ");
 
   return `{${properties}}`;
-}
-
-function isAcceptedTimeZone(timeZone: string): boolean {
-  try {
-    new Intl.DateTimeFormat(LOCALE, { timeZone });
-
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 export function createIanaTzdbResolver(): IanaTzdbResolver {

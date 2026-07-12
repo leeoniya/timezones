@@ -6,6 +6,7 @@ import {
   type TimeZoneStrategy,
 } from "../dist/timezones.js";
 import { TIME_ZONE_ABBREVIATIONS, type TimeZoneAbbreviationEntry } from "../dist/timezone-abbreviations.js";
+import { TIME_ZONE_ALIAS_GROUPS } from "../dist/timezone-aliases.js";
 
 interface StrategyConfig {
   formatterCount: (zones: string[]) => number;
@@ -31,6 +32,7 @@ const strategies: Record<TimeZoneStrategy, StrategyConfig> = {
   },
 };
 const DEFAULT_SAMPLE_COUNT = 21;
+const ALIAS_TO_CANONICAL = createAliasToCanonicalMap();
 
 const [strategyName, timestampArg, modeArg] = process.argv.slice(2);
 const timestamp = timestampArg === undefined ? Date.UTC(2026, 5, 30, 12) : Number(timestampArg);
@@ -291,7 +293,11 @@ function countGroups(
   const groups = new Set<string>();
 
   for (const timeZone of zones) {
-    const entry = TIME_ZONE_ABBREVIATIONS[timeZone];
+    const entry = getEntryForZone(timeZone);
+
+    if (!entry) {
+      throw new Error(`No abbreviation entry found for "${timeZone}".`);
+    }
 
     if (shouldGroup(entry)) {
       groups.add(JSON.stringify(entry));
@@ -299,6 +305,30 @@ function countGroups(
   }
 
   return groups.size;
+}
+
+function createAliasToCanonicalMap(): ReadonlyMap<string, string> {
+  const aliasToCanonical = new Map<string, string>();
+
+  for (const [canonical, ...aliases] of TIME_ZONE_ALIAS_GROUPS) {
+    for (const alias of aliases) {
+      aliasToCanonical.set(alias, canonical);
+    }
+  }
+
+  return aliasToCanonical;
+}
+
+function getEntryForZone(timeZone: string): TimeZoneAbbreviationEntry | undefined {
+  const direct = TIME_ZONE_ABBREVIATIONS[timeZone];
+
+  if (direct) {
+    return direct;
+  }
+
+  const canonical = ALIAS_TO_CANONICAL.get(timeZone);
+
+  return canonical ? TIME_ZONE_ABBREVIATIONS[canonical] : undefined;
 }
 
 function diffMemory(

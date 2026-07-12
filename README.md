@@ -54,6 +54,15 @@ to `"conservative"`.
 getTimeZonesAt(Date.UTC(2024, 6, 15, 12), "fastest");
 ```
 
+### `isAlias(timeZone)`
+
+Returns `true` when `timeZone` is a non-canonical tzdb alias name.
+
+```ts
+isAlias("Asia/Calcutta"); // true
+isAlias("Asia/Kolkata"); // false
+```
+
 `"conservative"` uses one `Intl.DateTimeFormat` per time zone.
 This is the most accurate option.
 
@@ -87,9 +96,8 @@ Refresh tzdb data and regenerate:
 npm run generate
 ```
 
-The generator also refreshes `scripts/timezone-aliases.ts` from pinned tzdb link
-data so canonical names missing from `Intl.supportedValuesOf("timeZone")` are
-kept in sync with supported aliases.
+The generator also refreshes `src/timezone-aliases.ts` from pinned tzdb link
+data so canonical names and their non-canonical aliases stay in sync.
 
 ## Scripts
 
@@ -102,7 +110,7 @@ npm test
 
 ### Benchmark snapshot
 
-Current benchmark output (Node `v26.4.0`, Linux, [AMD Ryzen 7 PRO 5850U](https://www.cpubenchmark.net/cpu.php?id=4198), `419` zones, `50` iterations):
+Current benchmark output (Node `v26.4.0`, Linux, [AMD Ryzen 7 PRO 5850U](https://www.cpubenchmark.net/cpu.php?id=4198), `438` zones, `50` iterations):
 
 - CPU cold full list:
   - `conservative`: `63.474 ms`
@@ -117,15 +125,15 @@ Current benchmark output (Node `v26.4.0`, Linux, [AMD Ryzen 7 PRO 5850U](https:/
   - `balanced`: `1.256 ms` (~`1.33x` faster)
   - `fastest`: `0.426 ms` (~`3.93x` faster)
 - Formatter cache size:
-  - `conservative`: `419` formatters
+  - `conservative`: `438` formatters
   - `balanced`: `86` formatters
   - `fastest`: `27` formatters
 - RSS memory delta after cache creation:
-  - `conservative`: `8.88 MiB`
-  - `balanced`: `640.0 KiB`
-  - `fastest`: `256.0 KiB`
+  - `conservative`: `10.88 MiB`
+  - `balanced`: `1.00 MiB`
+  - `fastest`: `128.0 KiB`
 
-*Intl prewarm bootstrap adds a one-time per-process RSS overhead (about `23.38 MiB` on this machine), measured separately and excluded from the per-strategy cache-creation deltas above.*
+*Intl prewarm bootstrap adds a one-time per-process RSS overhead (about `17.46 MiB` on this machine), measured separately and excluded from the per-strategy cache-creation deltas above.*
 
 Reproduce locally:
 

@@ -1,4 +1,5 @@
 export {
+  isAlias,
   getTimeZonesAt,
   type TimeZoneInfo,
   type TimeZoneStrategy,

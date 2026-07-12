@@ -4,8 +4,11 @@ import test from "node:test";
 import {
   getAvailableTimeZones,
   getTimeZonesAt,
+  isAlias,
   type TimeZoneInfo,
 } from "../dist/timezones.js";
+import { TIME_ZONE_ABBREVIATIONS } from "../dist/timezone-abbreviations.js";
+import { TIME_ZONE_ALIAS_GROUPS } from "../dist/timezone-aliases.js";
 
 const JANUARY_2024 = Date.UTC(2024, 0, 15, 12);
 const JULY_2024 = Date.UTC(2024, 6, 15, 12);
@@ -18,12 +21,36 @@ test("excludes fixed Etc/GMT offset aliases from the available timezone list", (
   assert.equal(getAvailableTimeZones().some((timeZone) => /^Etc\/GMT[+-]\d+$/.test(timeZone)), false);
 });
 
-test("only includes time zones supported by Intl plus UTC", () => {
-  const supportedTimeZones = new Set(Intl.supportedValuesOf("timeZone"));
+test("only includes generated canonical zones and aliases", () => {
+  const canonicalNames = new Set(Object.keys(TIME_ZONE_ABBREVIATIONS));
+  const aliasNames = new Set<string>();
+
+  for (const [canonicalName, ...aliases] of TIME_ZONE_ALIAS_GROUPS) {
+    assert.equal(isAlias(canonicalName), false, canonicalName);
+    for (const alias of aliases) {
+      aliasNames.add(alias);
+      assert.equal(isAlias(alias), true, alias);
+    }
+  }
 
   for (const timeZone of getAvailableTimeZones()) {
-    assert.equal(timeZone === "UTC" || supportedTimeZones.has(timeZone), true, timeZone);
+    assert.equal(canonicalNames.has(timeZone) || aliasNames.has(timeZone), true, timeZone);
   }
+});
+
+test("returns available time zones in sorted order", () => {
+  const available = getAvailableTimeZones();
+  const sorted = [...available].sort((timeZoneA, timeZoneB) => timeZoneA.localeCompare(timeZoneB));
+
+  assert.deepEqual(available, sorted);
+});
+
+test("reports non-canonical alias membership", () => {
+  assert.equal(isAlias("Asia/Saigon"), true);
+  assert.equal(isAlias("Asia/Ho_Chi_Minh"), false);
+  assert.equal(isAlias("Asia/Calcutta"), true);
+  assert.equal(isAlias("Asia/Kolkata"), false);
+  assert.equal(isAlias("UTC"), false);
 });
 
 test("lists abbreviations and offsets for supplied time zones", () => {
@@ -58,6 +85,27 @@ test("balanced and fastest strategies return matching current-ish values", () =>
     pickZones(getTimeZonesAt(timestamp, "fastest"), timeZones),
     pickZones(getTimeZonesAt(timestamp, "conservative"), timeZones),
   );
+});
+
+test("all strategies return identical results for monthly checkpoints in 2026", () => {
+  for (let month = 0; month < 12; month += 1) {
+    const timestamp = Date.UTC(2026, month, 1, 12);
+    const conservative = JSON.stringify(getTimeZonesAt(timestamp, "conservative"));
+    const balanced = JSON.stringify(getTimeZonesAt(timestamp, "balanced"));
+    const fastest = JSON.stringify(getTimeZonesAt(timestamp, "fastest"));
+    const iso = new Date(timestamp).toISOString();
+
+    assert.equal(
+      balanced === conservative,
+      true,
+      `balanced mismatch at ${iso}`,
+    );
+    assert.equal(
+      fastest === conservative,
+      true,
+      `fastest mismatch at ${iso}`,
+    );
+  }
 });
 
 test("captures daylight saving changes at the requested timestamp", () => {

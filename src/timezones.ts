@@ -2,6 +2,7 @@ import {
   TIME_ZONE_ABBREVIATIONS,
   type TimeZoneAbbreviationEntry,
 } from "./timezone-abbreviations.js";
+import { TIME_ZONE_ALIAS_GROUPS } from "./timezone-aliases.js";
 
 export interface TimeZoneInfo {
   /** IANA time zone identifier, for example "America/New_York". */
@@ -20,7 +21,9 @@ const conservativeOffsetFormatterCache = new Map<string, Intl.DateTimeFormat>();
 const balancedOffsetFormatterCache = new Map<string, Intl.DateTimeFormat>();
 const fastestOffsetFormatterCache = new Map<string, Intl.DateTimeFormat>();
 const GENERATED_TIME_ZONE_LOOKUP = TIME_ZONE_ABBREVIATIONS as Record<string, TimeZoneAbbreviationEntry>;
-const TIME_ZONE_LOOKUP = createSupportedTimeZoneLookup();
+const TIME_ZONE_LOOKUP = createTimeZoneLookup();
+const TIME_ZONE_ALIAS_SET = createAliasSet();
+const AVAILABLE_TIME_ZONES = Object.keys(TIME_ZONE_LOOKUP);
 const MS_PER_HOUR = 60 * 60 * 1000;
 let balancedRepresentatives: ReadonlyMap<string, string> | undefined;
 let fastestRepresentatives: ReadonlyMap<string, string> | undefined;
@@ -32,7 +35,14 @@ let cacheTimeZones: TimeZoneInfo[] | undefined;
  * Returns all IANA time zones in the generated abbreviation lookup.
  */
 export function getAvailableTimeZones(): string[] {
-  return Object.keys(TIME_ZONE_LOOKUP);
+  return AVAILABLE_TIME_ZONES;
+}
+
+/**
+ * Returns true when a time zone is a non-canonical alias.
+ */
+export function isAlias(timeZone: string): boolean {
+  return TIME_ZONE_ALIAS_SET.has(timeZone);
 }
 
 /**
@@ -114,17 +124,58 @@ function createTimeZoneInfo(
   };
 }
 
-function createSupportedTimeZoneLookup(): Record<string, TimeZoneAbbreviationEntry> {
-  const supportedTimeZones = new Set(Intl.supportedValuesOf("timeZone"));
-  const lookup: Record<string, TimeZoneAbbreviationEntry> = {};
+function createTimeZoneLookup(): Record<string, TimeZoneAbbreviationEntry> {
+  const unsortedLookup: Record<string, TimeZoneAbbreviationEntry> = {};
 
   for (const timeZone in GENERATED_TIME_ZONE_LOOKUP) {
-    if (supportedTimeZones.has(timeZone) || timeZone === "UTC") {
-      lookup[timeZone] = GENERATED_TIME_ZONE_LOOKUP[timeZone];
+    unsortedLookup[timeZone] = GENERATED_TIME_ZONE_LOOKUP[timeZone];
+  }
+
+  addAliasEntries(unsortedLookup);
+
+  const sortedLookup: Record<string, TimeZoneAbbreviationEntry> = {};
+
+  for (const timeZone of Object.keys(unsortedLookup).sort((timeZoneA, timeZoneB) => {
+    return timeZoneA.localeCompare(timeZoneB);
+  })) {
+    sortedLookup[timeZone] = unsortedLookup[timeZone];
+  }
+
+  return sortedLookup;
+}
+
+function addAliasEntries(lookup: Record<string, TimeZoneAbbreviationEntry>): void {
+  for (const [canonicalTimeZone, ...aliases] of TIME_ZONE_ALIAS_GROUPS) {
+    const source = lookup[canonicalTimeZone]
+      ? canonicalTimeZone
+      : aliases.find((timeZone) => lookup[timeZone]);
+
+    if (!source) {
+      continue;
+    }
+
+    for (const alias of aliases) {
+      if (!lookup[alias]) {
+        lookup[alias] = lookup[source];
+      }
+    }
+
+    if (!lookup[canonicalTimeZone]) {
+      lookup[canonicalTimeZone] = lookup[source];
+    }
+  }
+}
+
+function createAliasSet(): ReadonlySet<string> {
+  const aliases = new Set<string>();
+
+  for (const [, ...groupAliases] of TIME_ZONE_ALIAS_GROUPS) {
+    for (const alias of groupAliases) {
+      aliases.add(alias);
     }
   }
 
-  return lookup;
+  return aliases;
 }
 
 function createRepresentativeMap(

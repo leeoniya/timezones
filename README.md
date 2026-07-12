@@ -64,17 +64,29 @@ isAlias("Asia/Kolkata"); // false
 ```
 
 `"conservative"` uses one `Intl.DateTimeFormat` per time zone.
-This is the most accurate option.
+This uses the largest formatter cache.
 
 `"balanced"` uses one formatter per generated
-offset-to-abbreviation group. This reduces formatter count while accepting
-current-ish approximation around transition edge cases.
+offset-to-abbreviation group. This reduces formatter count.
 
 `"fastest"` uses static offsets for zones with one generated
-offset and one formatter per multi-offset group. This is the fastest and most
-approximate option.
+offset and one formatter per multi-offset group. This minimizes formatter work.
+
+## Strategy Validation
+
+The test suite includes a parity check that iterates every UTC day from
+`2026-01-01` through `2030-12-31` and verifies that `"conservative"`,
+`"balanced"`, and `"fastest"` return identical full-list output for each day.
+
+Run it with:
+
+```sh
+npm test
+```
 
 ## Performance Notes
+
+For strategy output parity coverage, see [Strategy Validation](#strategy-validation).
 
 The utility uses a generated current-ish offset-to-abbreviation lookup in
 `src/timezone-abbreviations.ts`. The generator uses pinned IANA tzdb source

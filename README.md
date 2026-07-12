@@ -33,7 +33,7 @@ console.log(zones.find((zone) => zone.name === "America/New_York"));
 
 ## API
 
-### `getTimeZonesAt(timestamp, strategy?)`
+### `getTimeZonesAt(timestamp)`
 
 Returns one entry per time zone:
 
@@ -47,11 +47,8 @@ interface TimeZoneInfo {
 
 `timestamp` is a numeric UTC millisecond timestamp.
 
-`strategy` can be `"conservative"`, `"balanced"`, or `"fastest"`. It defaults
-to `"conservative"`.
-
 ```ts
-getTimeZonesAt(Date.UTC(2024, 6, 15, 12), "fastest");
+getTimeZonesAt(Date.UTC(2024, 6, 15, 12));
 ```
 
 ### `isAlias(timeZone)`
@@ -63,20 +60,14 @@ isAlias("Asia/Calcutta"); // true
 isAlias("Asia/Kolkata"); // false
 ```
 
-`"conservative"` uses one `Intl.DateTimeFormat` per time zone.
-This uses the largest formatter cache.
+The runtime implementation uses static offsets for single-offset zones and one
+formatter per multi-offset abbreviation group to minimize formatter work.
 
-`"balanced"` uses one formatter per generated
-offset-to-abbreviation group. This reduces formatter count.
-
-`"fastest"` uses static offsets for zones with one generated
-offset and one formatter per multi-offset group. This minimizes formatter work.
-
-## Strategy Validation
+## Implementation Validation
 
 The test suite includes a parity check that iterates every UTC day from
-`2026-01-01` through `2030-12-31` and verifies that `"conservative"`,
-`"balanced"`, and `"fastest"` return identical full-list output for each day.
+`2026-01-01` through `2030-12-31` and verifies runtime output against a
+test-only conservative validator.
 
 Run it with:
 
@@ -86,7 +77,7 @@ npm test
 
 ## Performance Notes
 
-For strategy output parity coverage, see [Strategy Validation](#strategy-validation).
+For implementation output parity coverage, see [Implementation Validation](#implementation-validation).
 
 The utility uses a generated current-ish offset-to-abbreviation lookup in
 `src/timezone-abbreviations.ts`. The generator uses pinned IANA tzdb source
@@ -124,28 +115,15 @@ npm test
 
 Current benchmark output (Node `v26.4.0`, Linux, [AMD Ryzen 7 PRO 5850U](https://www.cpubenchmark.net/cpu.php?id=4198), `438` zones, `50` iterations):
 
-- CPU cold full list:
-  - `conservative`: `62.747 ms`
-  - `balanced`: `13.377 ms` (~`4.69x` faster)
-  - `fastest`: `5.526 ms` (~`11.35x` faster)
-- CPU warm within-hour cache hit (avg):
-  - `conservative`: `0.072 ms`
-  - `balanced`: `0.033 ms` (~`2.18x` faster)
-  - `fastest`: `0.012 ms` (~`6.00x` faster)
-- CPU warm forced cache miss (avg):
-  - `conservative`: `2.126 ms`
-  - `balanced`: `1.414 ms` (~`1.50x` faster)
-  - `fastest`: `0.519 ms` (~`4.10x` faster)
-- Formatter cache size:
-  - `conservative`: `438` formatters
-  - `balanced`: `89` formatters
-  - `fastest`: `30` formatters
-- RSS memory delta after cache creation:
-  - `conservative`: `11.00 MiB`
-  - `balanced`: `1.12 MiB`
-  - `fastest`: `256.0 KiB`
+```md
+| CPU cold full list                    | `21.824 ms` |
+| CPU warm within-hour cache hit        | `0.017 ms`  |
+| CPU warm forced cache miss            | `0.718 ms`  |
+| Formatter cache size                  | `30`        |
+| RSS memory delta after cache creation | `256.0 KiB` |
+```
 
-*Intl prewarm bootstrap adds a one-time per-process RSS overhead (about `17.46 MiB` on this machine), measured separately and excluded from the per-strategy cache-creation deltas above.*
+*Intl prewarm bootstrap adds a one-time per-process RSS overhead (about `17.40 MiB` on this machine), measured separately and excluded from the cache-creation delta above.*
 
 Reproduce locally:
 
@@ -153,5 +131,7 @@ Reproduce locally:
 npm run benchcpu
 npm run benchmem
 ```
+
+Both benchmark scripts print markdown table rows with padded heading and value columns (`| <heading> | <value> |`) for terminal readability and easy copy/paste into docs.
 
 Numbers vary by CPU, libc/ICU, Node version, and active system load.

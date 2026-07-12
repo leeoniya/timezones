@@ -3,14 +3,9 @@ import { spawnSync } from "node:child_process";
 import {
   getAvailableTimeZones,
   getTimeZonesAt,
-  type TimeZoneStrategy,
 } from "../dist/timezones.js";
 import { TIME_ZONE_ABBREVIATIONS, type TimeZoneAbbreviationEntry } from "../dist/timezone-abbreviations.js";
 import { TIME_ZONE_ALIAS_GROUPS } from "../dist/timezone-aliases.js";
-
-interface StrategyConfig {
-  formatterCount: (zones: string[]) => number;
-}
 
 interface MemoryMeasurement {
   resultLength: number;
@@ -19,25 +14,21 @@ interface MemoryMeasurement {
 }
 
 type BenchmarkMode = "cold" | "prewarm" | "prewarm-bootstrap" | "prewarm-sample";
-
-const strategies: Record<TimeZoneStrategy, StrategyConfig> = {
-  conservative: {
-    formatterCount: (zones) => zones.length,
-  },
-  balanced: {
-    formatterCount: (zones) => countGroups(zones, () => true),
-  },
-  fastest: {
-    formatterCount: (zones) => countGroups(zones, (entry) => Object.keys(entry).length > 1),
-  },
-};
 const DEFAULT_SAMPLE_COUNT = 21;
 const ALIAS_TO_CANONICAL = createAliasToCanonicalMap();
+const DEFAULT_TIMESTAMP = Date.UTC(2026, 5, 30, 12);
+const INTERNAL_BOOTSTRAP_ENV = "BENCHMEM_INTERNAL_BOOTSTRAP";
 
-const [strategyName, timestampArg, modeArg] = process.argv.slice(2);
-const timestamp = timestampArg === undefined ? Date.UTC(2026, 5, 30, 12) : Number(timestampArg);
+const args = process.argv.slice(2);
+const isInternalBootstrap = process.env[INTERNAL_BOOTSTRAP_ENV] === "1";
+const timestampArg = args[0];
+const modeArg = args[1];
+const timestamp =
+  timestampArg === undefined || isBenchmarkMode(timestampArg)
+    ? DEFAULT_TIMESTAMP
+    : Number(timestampArg);
 
-if (!strategyName) {
+if (!isInternalBootstrap && args.length === 0) {
   const sampleCount = Number.parseInt(process.env.BENCHMEM_SAMPLES ?? String(DEFAULT_SAMPLE_COUNT), 10);
 
   if (!Number.isInteger(sampleCount) || sampleCount <= 0) {
@@ -51,12 +42,15 @@ if (!strategyName) {
       "--expose-gc",
       "--experimental-strip-types",
       new URL(import.meta.url).pathname,
-      "bootstrap",
       String(timestamp),
       "prewarm-bootstrap",
     ],
     {
       encoding: "utf8",
+      env: {
+        ...process.env,
+        [INTERNAL_BOOTSTRAP_ENV]: "1",
+      },
       stdio: ["ignore", "pipe", "inherit"],
     },
   );
@@ -67,9 +61,7 @@ if (!strategyName) {
     process.exit(bootstrapResult.status ?? 1);
   }
 
-  for (const name of Object.keys(strategies)) {
-    printDeterministicPrewarmSummary(name, timestamp, sampleCount);
-  }
+  printDeterministicPrewarmSummary(timestamp, sampleCount);
 
   process.exit(0);
 }
@@ -84,106 +76,104 @@ if (!Number.isFinite(timestamp)) {
   process.exit(1);
 }
 
-const mode = modeArg === undefined ? "cold" : modeArg;
+const mode = timestampArg !== undefined && isBenchmarkMode(timestampArg)
+  ? timestampArg
+  : (modeArg ?? "cold");
+
+if (timestampArg !== undefined && isBenchmarkMode(timestampArg)) {
+  const inferredMode = timestampArg;
+
+  if (modeArg !== undefined) {
+    console.error(`Mode "${inferredMode}" does not accept a second positional argument.`);
+    process.exit(1);
+  }
+}
 
 if (!isBenchmarkMode(mode)) {
   console.error(`Unknown mode "${mode}". Use: cold, prewarm, prewarm-bootstrap, prewarm-sample.`);
   process.exit(1);
 }
 
-if (strategyName === "bootstrap") {
+if (isInternalBootstrap) {
   if (mode !== "prewarm-bootstrap") {
-    console.error(`Strategy "bootstrap" only supports mode "prewarm-bootstrap".`);
+    console.error(`Internal bootstrap only supports mode "prewarm-bootstrap".`);
     process.exit(1);
   }
 
-  console.log("measurement: intl-prewarm-bootstrap");
-  console.log(`mode: ${mode}`);
-  console.log(`timestamp: ${timestamp}`);
-  runPrewarmBootstrapBenchmark(timestamp);
+  const rows: Array<[string, string]> = [
+    ["measurement", "intl-prewarm-bootstrap"],
+    ["mode", mode],
+    ["timestamp", String(timestamp)],
+    ...runPrewarmBootstrapBenchmark(timestamp),
+  ];
+  printMarkdownTable(rows);
   process.exit(0);
 }
 
-if (!isTimeZoneStrategy(strategyName)) {
-  console.error(`Unknown strategy "${strategyName}". Use: ${Object.keys(strategies).join(", ")}`);
-  process.exit(1);
-}
-
-const strategy = strategies[strategyName];
 const zones = getAvailableTimeZones();
-const formatterCount = strategy.formatterCount(zones);
+const formatterCount = getRuntimeFormatterCount(zones);
 
 if (mode === "prewarm-sample") {
-  const measurement = measurePrewarmed(strategyName, timestamp);
+  const measurement = measurePrewarmed(timestamp);
   process.stdout.write(JSON.stringify(measurement));
   process.exit(0);
 }
 
-console.log(`strategy: ${strategyName}`);
-console.log(`mode: ${mode}`);
-console.log(`timestamp: ${timestamp}`);
-console.log(`zones: ${zones.length}`);
-console.log(`estimated formatters: ${formatterCount}`);
+const rows: Array<[string, string]> = [
+  ["implementation", "runtime"],
+  ["mode", mode],
+  ["timestamp", String(timestamp)],
+  ["zones", String(zones.length)],
+  ["estimated formatters", String(formatterCount)],
+  ...(mode === "cold"
+    ? runColdBenchmark(formatterCount, timestamp)
+    : runPrewarmedBenchmark(formatterCount, timestamp)),
+];
 
-if (mode === "cold") {
-  runColdBenchmark(strategyName, formatterCount, timestamp);
-} else {
-  runPrewarmedBenchmark(strategyName, formatterCount, timestamp);
+printMarkdownTable(rows);
+
+function runColdBenchmark(formatterCount: number, timestamp: number): Array<[string, string]> {
+  const measurement = measureCold(timestamp);
+
+  return [
+    ["result length", String(measurement.resultLength)],
+    ["memory delta (cold) rss", formatMemoryDelta(measurement.delta.rss, formatterCount)],
+    ["memory delta (cold) heapTotal", formatMemoryDelta(measurement.delta.heapTotal, formatterCount)],
+    ["memory delta (cold) heapUsed", formatMemoryDelta(measurement.delta.heapUsed, formatterCount)],
+    ["memory delta (cold) external", formatMemoryDelta(measurement.delta.external, formatterCount)],
+    ["memory delta (cold) arrayBuffers", formatMemoryDelta(measurement.delta.arrayBuffers, formatterCount)],
+    ["absolute memory (cold) rss", formatBytes(measurement.after.rss)],
+    ["absolute memory (cold) heapTotal", formatBytes(measurement.after.heapTotal)],
+    ["absolute memory (cold) heapUsed", formatBytes(measurement.after.heapUsed)],
+    ["absolute memory (cold) external", formatBytes(measurement.after.external)],
+    ["absolute memory (cold) arrayBuffers", formatBytes(measurement.after.arrayBuffers)],
+  ];
 }
 
-function runColdBenchmark(strategyName: TimeZoneStrategy, formatterCount: number, timestamp: number): void {
-  const measurement = measureCold(strategyName, timestamp);
+function runPrewarmedBenchmark(formatterCount: number, timestamp: number): Array<[string, string]> {
+  const measurement = measurePrewarmed(timestamp);
 
-  console.log(`result length: ${measurement.resultLength}`);
-  console.log("");
-  console.log("Memory delta for first getTimeZonesAt call (cold process):");
-  printMemoryDelta("rss", measurement.delta.rss, formatterCount);
-  printMemoryDelta("heapTotal", measurement.delta.heapTotal, formatterCount);
-  printMemoryDelta("heapUsed", measurement.delta.heapUsed, formatterCount);
-  printMemoryDelta("external", measurement.delta.external, formatterCount);
-  printMemoryDelta("arrayBuffers", measurement.delta.arrayBuffers, formatterCount);
-  console.log("");
-  console.log("Absolute memory after cold measurement:");
-  printMemoryValue("rss", measurement.after.rss);
-  printMemoryValue("heapTotal", measurement.after.heapTotal);
-  printMemoryValue("heapUsed", measurement.after.heapUsed);
-  printMemoryValue("external", measurement.after.external);
-  printMemoryValue("arrayBuffers", measurement.after.arrayBuffers);
-  console.log("");
-}
-
-function runPrewarmedBenchmark(strategyName: TimeZoneStrategy, formatterCount: number, timestamp: number): void {
-  const measurement = measurePrewarmed(strategyName, timestamp);
-
-  console.log(`result length: ${measurement.resultLength}`);
-  console.log("");
-  console.log("Memory delta for getTimeZonesAt after Intl prewarm:");
-  printMemoryDelta("rss", measurement.delta.rss, formatterCount);
-  printMemoryDelta("heapTotal", measurement.delta.heapTotal, formatterCount);
-  printMemoryDelta("heapUsed", measurement.delta.heapUsed, formatterCount);
-  printMemoryDelta("external", measurement.delta.external, formatterCount);
-  printMemoryDelta("arrayBuffers", measurement.delta.arrayBuffers, formatterCount);
-  console.log("");
-  console.log("Absolute memory after prewarmed measurement:");
-  printMemoryValue("rss", measurement.after.rss);
-  printMemoryValue("heapTotal", measurement.after.heapTotal);
-  printMemoryValue("heapUsed", measurement.after.heapUsed);
-  printMemoryValue("external", measurement.after.external);
-  printMemoryValue("arrayBuffers", measurement.after.arrayBuffers);
-  console.log("");
+  return [
+    ["result length", String(measurement.resultLength)],
+    ["memory delta (prewarm) rss", formatMemoryDelta(measurement.delta.rss, formatterCount)],
+    ["memory delta (prewarm) heapTotal", formatMemoryDelta(measurement.delta.heapTotal, formatterCount)],
+    ["memory delta (prewarm) heapUsed", formatMemoryDelta(measurement.delta.heapUsed, formatterCount)],
+    ["memory delta (prewarm) external", formatMemoryDelta(measurement.delta.external, formatterCount)],
+    ["memory delta (prewarm) arrayBuffers", formatMemoryDelta(measurement.delta.arrayBuffers, formatterCount)],
+    ["absolute memory (prewarm) rss", formatBytes(measurement.after.rss)],
+    ["absolute memory (prewarm) heapTotal", formatBytes(measurement.after.heapTotal)],
+    ["absolute memory (prewarm) heapUsed", formatBytes(measurement.after.heapUsed)],
+    ["absolute memory (prewarm) external", formatBytes(measurement.after.external)],
+    ["absolute memory (prewarm) arrayBuffers", formatBytes(measurement.after.arrayBuffers)],
+  ];
 }
 
 function printDeterministicPrewarmSummary(
-  strategyName: string,
   timestamp: number,
   sampleCount: number,
 ): void {
-  if (!isTimeZoneStrategy(strategyName)) {
-    throw new Error(`Unknown strategy "${strategyName}".`);
-  }
-
   const zones = getAvailableTimeZones();
-  const formatterCount = strategies[strategyName].formatterCount(zones);
+  const formatterCount = getRuntimeFormatterCount(zones);
   const samples: MemoryMeasurement[] = [];
 
   for (let index = 0; index < sampleCount; index += 1) {
@@ -193,7 +183,6 @@ function printDeterministicPrewarmSummary(
         "--expose-gc",
         "--experimental-strip-types",
         new URL(import.meta.url).pathname,
-        strategyName,
         String(timestamp),
         "prewarm-sample",
       ],
@@ -210,7 +199,7 @@ function printDeterministicPrewarmSummary(
     const output = result.stdout.trim();
 
     if (!output) {
-      throw new Error(`No sample output for strategy "${strategyName}".`);
+      throw new Error('No sample output for implementation "runtime".');
     }
 
     samples.push(JSON.parse(output) as MemoryMeasurement);
@@ -218,24 +207,23 @@ function printDeterministicPrewarmSummary(
 
   const medianMeasurement = selectMedianMeasurement(samples, "rss");
 
-  console.log(`strategy: ${strategyName}`);
-  console.log("mode: prewarm");
-  console.log(`timestamp: ${timestamp}`);
-  console.log(`zones: ${zones.length}`);
-  console.log(`estimated formatters: ${formatterCount}`);
-  console.log(`samples: ${sampleCount} (median by rss)`);
-  console.log(`result length: ${medianMeasurement.resultLength}`);
-  console.log("");
-  console.log("Memory delta for getTimeZonesAt after Intl prewarm:");
-  printMemoryDelta("rss", medianMeasurement.delta.rss, formatterCount);
-  printMemoryDelta("heapTotal", medianMeasurement.delta.heapTotal, formatterCount);
-  printMemoryDelta("heapUsed", medianMeasurement.delta.heapUsed, formatterCount);
-  printMemoryDelta("external", medianMeasurement.delta.external, formatterCount);
-  printMemoryDelta("arrayBuffers", medianMeasurement.delta.arrayBuffers, formatterCount);
-  console.log("");
+  printMarkdownTable([
+    ["implementation", "runtime"],
+    ["mode", "prewarm"],
+    ["timestamp", String(timestamp)],
+    ["zones", String(zones.length)],
+    ["estimated formatters", String(formatterCount)],
+    ["samples", `${sampleCount} (median by rss)`],
+    ["result length", String(medianMeasurement.resultLength)],
+    ["memory delta (prewarm) rss", formatMemoryDelta(medianMeasurement.delta.rss, formatterCount)],
+    ["memory delta (prewarm) heapTotal", formatMemoryDelta(medianMeasurement.delta.heapTotal, formatterCount)],
+    ["memory delta (prewarm) heapUsed", formatMemoryDelta(medianMeasurement.delta.heapUsed, formatterCount)],
+    ["memory delta (prewarm) external", formatMemoryDelta(medianMeasurement.delta.external, formatterCount)],
+    ["memory delta (prewarm) arrayBuffers", formatMemoryDelta(medianMeasurement.delta.arrayBuffers, formatterCount)],
+  ]);
 }
 
-function runPrewarmBootstrapBenchmark(timestamp: number): void {
+function runPrewarmBootstrapBenchmark(timestamp: number): Array<[string, string]> {
   forceGc();
   const before = process.memoryUsage();
 
@@ -245,18 +233,13 @@ function runPrewarmBootstrapBenchmark(timestamp: number): void {
   const after = process.memoryUsage();
   const delta = diffMemory(after, before);
 
-  console.log("");
-  console.log("Memory delta for Intl prewarm bootstrap:");
-  printMemoryDelta("rss", delta.rss, 1);
-  printMemoryDelta("heapTotal", delta.heapTotal, 1);
-  printMemoryDelta("heapUsed", delta.heapUsed, 1);
-  printMemoryDelta("external", delta.external, 1);
-  printMemoryDelta("arrayBuffers", delta.arrayBuffers, 1);
-  console.log("");
-}
-
-function isTimeZoneStrategy(value: string): value is TimeZoneStrategy {
-  return value in strategies;
+  return [
+    ["memory delta (bootstrap) rss", formatMemoryDelta(delta.rss, 1)],
+    ["memory delta (bootstrap) heapTotal", formatMemoryDelta(delta.heapTotal, 1)],
+    ["memory delta (bootstrap) heapUsed", formatMemoryDelta(delta.heapUsed, 1)],
+    ["memory delta (bootstrap) external", formatMemoryDelta(delta.external, 1)],
+    ["memory delta (bootstrap) arrayBuffers", formatMemoryDelta(delta.arrayBuffers, 1)],
+  ];
 }
 
 function isBenchmarkMode(value: string): value is BenchmarkMode {
@@ -307,6 +290,10 @@ function countGroups(
   return groups.size;
 }
 
+function getRuntimeFormatterCount(zones: string[]): number {
+  return countGroups(zones, (entry) => Object.keys(entry).length > 1);
+}
+
 function createAliasToCanonicalMap(): ReadonlyMap<string, string> {
   const aliasToCanonical = new Map<string, string>();
 
@@ -340,14 +327,11 @@ function diffMemory(
   ) as NodeJS.MemoryUsage;
 }
 
-function measureCold(
-  strategyName: TimeZoneStrategy,
-  timestamp: number,
-): MemoryMeasurement {
+function measureCold(timestamp: number): MemoryMeasurement {
   forceGc();
   const before = process.memoryUsage();
 
-  const result = getTimeZonesAt(timestamp, strategyName);
+  const result = getTimeZonesAt(timestamp);
 
   forceGc();
   const after = process.memoryUsage();
@@ -359,16 +343,13 @@ function measureCold(
   };
 }
 
-function measurePrewarmed(
-  strategyName: TimeZoneStrategy,
-  timestamp: number,
-): MemoryMeasurement {
+function measurePrewarmed(timestamp: number): MemoryMeasurement {
   prewarmIntl(timestamp);
 
   forceGc();
   const before = process.memoryUsage();
 
-  const result = getTimeZonesAt(timestamp, strategyName);
+  const result = getTimeZonesAt(timestamp);
 
   forceGc();
   const after = process.memoryUsage();
@@ -393,14 +374,23 @@ function selectMedianMeasurement(
   return sorted[Math.floor(sorted.length / 2)]!;
 }
 
-function printMemoryDelta(name: string, bytes: number, count: number): void {
+function formatMemoryDelta(bytes: number, count: number): string {
   const perFormatter = count === 0 ? "n/a" : `${formatBytes(bytes / count)} per formatter`;
-
-  console.log(`${name}: ${formatBytes(bytes)} (${perFormatter})`);
+  return `${formatBytes(bytes)} (${perFormatter})`;
 }
 
-function printMemoryValue(name: string, bytes: number): void {
-  console.log(`${name}: ${formatBytes(bytes)}`);
+function printMarkdownTable(rows: Array<[string, string]>): void {
+  const escapedRows = rows.map(([heading, value]) => [escapeMarkdownCell(heading), escapeMarkdownCell(value)] as const);
+  const headingWidth = Math.max(...escapedRows.map(([heading]) => heading.length));
+  const valueWidth = Math.max(...escapedRows.map(([, value]) => value.length));
+
+  for (const [heading, value] of escapedRows) {
+    console.log(`| ${heading.padEnd(headingWidth)} | ${value.padEnd(valueWidth)} |`);
+  }
+}
+
+function escapeMarkdownCell(value: string): string {
+  return value.replaceAll("|", "\\|").replaceAll("\n", "<br>");
 }
 
 function formatBytes(bytes: number): string {

@@ -9,6 +9,7 @@ import {
 } from "../dist/timezones.js";
 import { TIME_ZONE_ABBREVIATIONS } from "../dist/timezone-abbreviations.js";
 import { TIME_ZONE_ALIAS_GROUPS } from "../dist/timezone-aliases.js";
+import { getConservativeTimeZonesAt } from "./utils/conservative-timezones.ts";
 
 const JANUARY_2024 = Date.UTC(2024, 0, 15, 12);
 const JULY_2024 = Date.UTC(2024, 6, 15, 12);
@@ -66,47 +67,20 @@ test("lists abbreviations and offsets for supplied time zones", () => {
   );
 });
 
-test("default list uses the conservative strategy", () => {
-  assert.deepEqual(
-    pickZones(getTimeZonesAt(JULY_2024), ["America/New_York", "Pacific/Auckland"]),
-    pickZones(getTimeZonesAt(JULY_2024, "conservative"), ["America/New_York", "Pacific/Auckland"]),
-  );
-});
-
-test("balanced and fastest strategies return matching current-ish values", () => {
-  const timeZones = ["UTC", "America/Anchorage", "America/Juneau", "Europe/Berlin", "Pacific/Auckland"];
-  const timestamp = JULY_2024;
-
-  assert.deepEqual(
-    pickZones(getTimeZonesAt(timestamp, "balanced"), timeZones),
-    pickZones(getTimeZonesAt(timestamp, "conservative"), timeZones),
-  );
-  assert.deepEqual(
-    pickZones(getTimeZonesAt(timestamp, "fastest"), timeZones),
-    pickZones(getTimeZonesAt(timestamp, "conservative"), timeZones),
-  );
-});
-
-test("all strategies return identical results for every day through 2030", () => {
+test("runtime output matches conservative validation for every day through 2030", () => {
   const ONE_DAY_MS = 24 * 60 * 60 * 1000;
   const START_OF_2026 = Date.UTC(2026, 0, 1);
   const START_OF_2031 = Date.UTC(2031, 0, 1);
 
   for (let timestamp = START_OF_2026; timestamp < START_OF_2031; timestamp += ONE_DAY_MS) {
-    const conservative = JSON.stringify(getTimeZonesAt(timestamp, "conservative"));
-    const balanced = JSON.stringify(getTimeZonesAt(timestamp, "balanced"));
-    const fastest = JSON.stringify(getTimeZonesAt(timestamp, "fastest"));
+    const conservative = JSON.stringify(getConservativeTimeZonesAt(timestamp));
+    const runtime = JSON.stringify(getTimeZonesAt(timestamp));
     const iso = new Date(timestamp).toISOString();
 
     assert.equal(
-      balanced === conservative,
+      runtime === conservative,
       true,
-      `balanced mismatch at ${iso}`,
-    );
-    assert.equal(
-      fastest === conservative,
-      true,
-      `fastest mismatch at ${iso}`,
+      `runtime mismatch at ${iso}`,
     );
   }
 });
@@ -141,10 +115,10 @@ test("uses common New Zealand abbreviations instead of GMT offsets", () => {
   assert.equal(winter.offset, "+12:00");
 });
 
-test("reuses cached result for the same hour bucket and strategy", () => {
-  const first = getTimeZonesAt(JANUARY_2024, "conservative");
-  const second = getTimeZonesAt(JANUARY_2024 + 30 * 60 * 1000, "conservative");
-  const third = getTimeZonesAt(JANUARY_2024 + 30 * 60 * 1000, "balanced");
+test("reuses cached result for the same hour bucket", () => {
+  const first = getTimeZonesAt(JANUARY_2024);
+  const second = getTimeZonesAt(JANUARY_2024 + 30 * 60 * 1000);
+  const third = getTimeZonesAt(JANUARY_2024 + 60 * 60 * 1000);
 
   assert.strictEqual(second, first);
   assert.notStrictEqual(third, first);

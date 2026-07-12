@@ -13,22 +13,16 @@ export interface TimeZoneInfo {
   offset: string;
 }
 
-export type TimeZoneStrategy = "conservative" | "balanced" | "fastest";
-
 const DEFAULT_LOCALE = "en-US";
 
-const conservativeOffsetFormatterCache = new Map<string, Intl.DateTimeFormat>();
-const balancedOffsetFormatterCache = new Map<string, Intl.DateTimeFormat>();
-const fastestOffsetFormatterCache = new Map<string, Intl.DateTimeFormat>();
+const offsetFormatterCache = new Map<string, Intl.DateTimeFormat>();
 const GENERATED_TIME_ZONE_LOOKUP = TIME_ZONE_ABBREVIATIONS as Record<string, TimeZoneAbbreviationEntry>;
 const TIME_ZONE_LOOKUP = createTimeZoneLookup();
 const TIME_ZONE_ALIAS_SET = createAliasSet();
 const AVAILABLE_TIME_ZONES = Object.keys(TIME_ZONE_LOOKUP);
 const MS_PER_HOUR = 60 * 60 * 1000;
-let balancedRepresentatives: ReadonlyMap<string, string> | undefined;
-let fastestRepresentatives: ReadonlyMap<string, string> | undefined;
+let representatives: ReadonlyMap<string, string> | undefined;
 let cacheHour: number | undefined;
-let cacheStrategy: TimeZoneStrategy | undefined;
 let cacheTimeZones: TimeZoneInfo[] | undefined;
 
 /**
@@ -51,36 +45,18 @@ export function isAlias(timeZone: string): boolean {
  */
 export function getTimeZonesAt(
   timestamp: number,
-  strategy: TimeZoneStrategy = "conservative",
 ): TimeZoneInfo[] {
   const hourBucket = Math.floor(timestamp / MS_PER_HOUR);
 
-  if (cacheHour === hourBucket && cacheStrategy === strategy && cacheTimeZones) {
+  if (cacheHour === hourBucket && cacheTimeZones) {
     return cacheTimeZones;
   }
 
   const date = new Date(timestamp);
-  let timeZones: TimeZoneInfo[];
-
-  if (strategy === "balanced") {
-    balancedRepresentatives ??= createRepresentativeMap(() => true);
-
-    timeZones = listGroupedTimeZones(date, balancedRepresentatives, balancedOffsetFormatterCache, false);
-  } else if (strategy === "fastest") {
-    fastestRepresentatives ??= createRepresentativeMap((entry) => Object.keys(entry).length > 1);
-
-    timeZones = listGroupedTimeZones(date, fastestRepresentatives, fastestOffsetFormatterCache, true);
-  } else {
-    timeZones = getAvailableTimeZones().map((timeZone) => {
-      return createTimeZoneInfo(
-        timeZone,
-        getOffset(date, timeZone, conservativeOffsetFormatterCache),
-      );
-    });
-  }
+  representatives ??= createRepresentativeMap();
+  const timeZones = listGroupedTimeZones(date, representatives, offsetFormatterCache);
 
   cacheHour = hourBucket;
-  cacheStrategy = strategy;
   cacheTimeZones = timeZones;
 
   return timeZones;
@@ -90,13 +66,12 @@ function listGroupedTimeZones(
   date: Date,
   representatives: ReadonlyMap<string, string>,
   formatterCache: Map<string, Intl.DateTimeFormat>,
-  useStaticSingleOffset: boolean,
 ): TimeZoneInfo[] {
   return getAvailableTimeZones().map((timeZone) => {
     const entry = TIME_ZONE_LOOKUP[timeZone]!;
 
     const offset =
-      (useStaticSingleOffset ? getSingleStaticOffset(entry) : undefined) ??
+      getSingleStaticOffset(entry) ??
       getOffset(date, getRepresentative(representatives, timeZone), formatterCache);
 
     return createTimeZoneInfo(timeZone, offset);
@@ -171,13 +146,12 @@ function createAliasSet(): ReadonlySet<string> {
 }
 
 function createRepresentativeMap(
-  shouldGroup: (entry: TimeZoneAbbreviationEntry) => boolean,
 ): ReadonlyMap<string, string> {
   const groups = new Map<string, string[]>();
   const representatives = new Map<string, string>();
 
   for (const [timeZone, entry] of Object.entries(TIME_ZONE_LOOKUP)) {
-    if (!shouldGroup(entry)) {
+    if (Object.keys(entry).length <= 1) {
       continue;
     }
 

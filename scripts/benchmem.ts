@@ -3,9 +3,9 @@ import { spawnSync } from "node:child_process";
 import {
   getAvailableTimeZones,
   getTimeZonesAt,
-} from "../dist/timezones.js";
-import { TIME_ZONE_ABBREVIATIONS, type TimeZoneAbbreviationEntry } from "../dist/timezone-abbreviations.js";
-import { TIME_ZONE_ALIAS_GROUPS } from "../dist/timezone-aliases.js";
+} from "../src/timezones.ts";
+import { TIME_ZONE_ABBREVIATIONS, type TimeZoneAbbreviationEntry } from "../src/timezone-abbreviations.ts";
+import { TIME_ZONE_ALIAS_GROUPS } from "../src/timezone-aliases.ts";
 
 interface MemoryMeasurement {
   resultLength: number;
@@ -18,6 +18,9 @@ const DEFAULT_SAMPLE_COUNT = 21;
 const ALIAS_TO_CANONICAL = createAliasToCanonicalMap();
 const DEFAULT_TIMESTAMP = Date.UTC(2026, 5, 30, 12);
 const INTERNAL_BOOTSTRAP_ENV = "BENCHMEM_INTERNAL_BOOTSTRAP";
+const RUNTIME_FLAGS = "bun" in process.versions
+  ? ["--expose-gc"]
+  : ["--expose-gc", "--experimental-strip-types"];
 
 const args = process.argv.slice(2);
 const isInternalBootstrap = process.env[INTERNAL_BOOTSTRAP_ENV] === "1";
@@ -39,8 +42,7 @@ if (!isInternalBootstrap && args.length === 0) {
   const bootstrapResult = spawnSync(
     process.execPath,
     [
-      "--expose-gc",
-      "--experimental-strip-types",
+      ...RUNTIME_FLAGS,
       new URL(import.meta.url).pathname,
       String(timestamp),
       "prewarm-bootstrap",
@@ -67,7 +69,7 @@ if (!isInternalBootstrap && args.length === 0) {
 }
 
 if (typeof globalThis.gc !== "function") {
-  console.error("Run with: node --expose-gc --experimental-strip-types scripts/benchmem.ts");
+  console.error("Run with: bun --expose-gc scripts/benchmem.ts");
   process.exit(1);
 }
 
@@ -180,8 +182,7 @@ function printDeterministicPrewarmSummary(
     const result = spawnSync(
       process.execPath,
       [
-        "--expose-gc",
-        "--experimental-strip-types",
+        ...RUNTIME_FLAGS,
         new URL(import.meta.url).pathname,
         String(timestamp),
         "prewarm-sample",

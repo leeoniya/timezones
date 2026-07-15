@@ -1,5 +1,4 @@
 export {
-  isAlias,
   getTimeZonesAt,
   type TimeZoneInfo,
-} from "./timezones.js";
+} from "./timezones.ts";

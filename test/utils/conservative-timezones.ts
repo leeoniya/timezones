@@ -1,12 +1,12 @@
 import {
   getAvailableTimeZones,
   type TimeZoneInfo,
-} from "../../dist/timezones.js";
+} from "../../src/timezones.ts";
 import {
   TIME_ZONE_ABBREVIATIONS,
   type TimeZoneAbbreviationEntry,
-} from "../../dist/timezone-abbreviations.js";
-import { TIME_ZONE_ALIAS_GROUPS } from "../../dist/timezone-aliases.js";
+} from "../../src/timezone-abbreviations.ts";
+import { TIME_ZONE_ALIAS_GROUPS } from "../../src/timezone-aliases.ts";
 
 const DEFAULT_LOCALE = "en-US";
 const conservativeOffsetFormatterCache = new Map<string, Intl.DateTimeFormat>();
@@ -24,11 +24,18 @@ export function getConservativeTimeZonesAt(timestamp: number): TimeZoneInfo[] {
 
     const offset = getOffset(date, timeZone);
 
-    return {
+    const info: TimeZoneInfo = {
       name: timeZone,
       abbr: parseStoredAbbreviation(getStoredAbbreviation(entry, offset)),
       offset,
     };
+    const aliasOf = ALIAS_TO_CANONICAL.get(timeZone);
+
+    if (aliasOf !== undefined) {
+      info.aliasOf = aliasOf;
+    }
+
+    return info;
   });
 }
 

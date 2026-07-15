@@ -4,11 +4,10 @@ import test from "node:test";
 import {
   getAvailableTimeZones,
   getTimeZonesAt,
-  isAlias,
   type TimeZoneInfo,
-} from "../dist/timezones.js";
-import { TIME_ZONE_ABBREVIATIONS } from "../dist/timezone-abbreviations.js";
-import { TIME_ZONE_ALIAS_GROUPS } from "../dist/timezone-aliases.js";
+} from "../src/timezones.ts";
+import { TIME_ZONE_ABBREVIATIONS } from "../src/timezone-abbreviations.ts";
+import { TIME_ZONE_ALIAS_GROUPS } from "../src/timezone-aliases.ts";
 import { getConservativeTimeZonesAt } from "./utils/conservative-timezones.ts";
 
 const JANUARY_2024 = Date.UTC(2024, 0, 15, 12);
@@ -25,12 +24,13 @@ test("excludes fixed Etc/GMT offset aliases from the available timezone list", (
 test("only includes generated canonical zones and aliases", () => {
   const canonicalNames = new Set(Object.keys(TIME_ZONE_ABBREVIATIONS));
   const aliasNames = new Set<string>();
+  const zonesByName = new Map(getTimeZonesAt(JANUARY_2024).map((zone) => [zone.name, zone]));
 
   for (const [canonicalName, ...aliases] of TIME_ZONE_ALIAS_GROUPS) {
-    assert.equal(isAlias(canonicalName), false, canonicalName);
+    assert.equal(zonesByName.get(canonicalName)?.aliasOf, undefined, canonicalName);
     for (const alias of aliases) {
       aliasNames.add(alias);
-      assert.equal(isAlias(alias), true, alias);
+      assert.equal(zonesByName.get(alias)?.aliasOf, canonicalName, alias);
     }
   }
 
@@ -46,12 +46,14 @@ test("returns available time zones in sorted order", () => {
   assert.deepEqual(available, sorted);
 });
 
-test("reports non-canonical alias membership", () => {
-  assert.equal(isAlias("Asia/Saigon"), true);
-  assert.equal(isAlias("Asia/Ho_Chi_Minh"), false);
-  assert.equal(isAlias("Asia/Calcutta"), true);
-  assert.equal(isAlias("Asia/Kolkata"), false);
-  assert.equal(isAlias("UTC"), false);
+test("reports non-canonical aliases through the aliasOf field", () => {
+  const zonesByName = new Map(getTimeZonesAt(JANUARY_2024).map((zone) => [zone.name, zone]));
+
+  assert.equal(zonesByName.get("Asia/Saigon")?.aliasOf, "Asia/Ho_Chi_Minh");
+  assert.equal(zonesByName.get("Asia/Ho_Chi_Minh")?.aliasOf, undefined);
+  assert.equal(zonesByName.get("Asia/Calcutta")?.aliasOf, "Asia/Kolkata");
+  assert.equal(zonesByName.get("Asia/Kolkata")?.aliasOf, undefined);
+  assert.equal(zonesByName.get("UTC")?.aliasOf, undefined);
 });
 
 test("lists abbreviations and offsets for supplied time zones", () => {

@@ -42,6 +42,7 @@ interface TimeZoneInfo {
   name: string;
   abbr: string;
   offset: string;
+  aliasOf?: string;
 }
 ```
 
@@ -51,13 +52,14 @@ interface TimeZoneInfo {
 getTimeZonesAt(Date.UTC(2024, 6, 15, 12));
 ```
 
-### `isAlias(timeZone)`
-
-Returns `true` when `timeZone` is a non-canonical tzdb alias name.
+`aliasOf` is present only on non-canonical tzdb alias entries and names the
+canonical zone:
 
 ```ts
-isAlias("Asia/Calcutta"); // true
-isAlias("Asia/Kolkata"); // false
+const zones = getTimeZonesAt(Date.UTC(2024, 6, 15, 12));
+
+zones.find((zone) => zone.name === "Asia/Calcutta")?.aliasOf; // "Asia/Kolkata"
+zones.find((zone) => zone.name === "Asia/Kolkata")?.aliasOf; // undefined
 ```
 
 The runtime implementation uses static offsets for single-offset zones and one
@@ -72,7 +74,7 @@ test-only conservative validator.
 Run it with:
 
 ```sh
-npm test
+bun run test
 ```
 
 ## Performance Notes
@@ -96,7 +98,7 @@ table, the utility falls back to the first generated abbreviation for that zone.
 Refresh tzdb data and regenerate:
 
 ```sh
-npm run generate
+bun run generate
 ```
 
 The generator also refreshes `src/timezone-aliases.ts` from pinned tzdb link
@@ -105,33 +107,37 @@ data so canonical names and their non-canonical aliases stay in sync.
 ## Scripts
 
 ```sh
-npm install --ignore-scripts
-npm run generate
-npm run build
-npm test
+bun install --ignore-scripts
+bun run generate
+bun run build
+bun run test
 ```
+
+`bun run build` bundles `src/index.ts` into `dist/index.js` (unminified ESM)
+and `src/global.ts` into `dist/index.iife.js` (unminified IIFE that exposes
+`globalThis.timezones`), then emits type declarations with `tsc`.
 
 ### Benchmark snapshot
 
-Current benchmark output (Node `v26.4.0`, Linux, [AMD Ryzen 7 PRO 5850U](https://www.cpubenchmark.net/cpu.php?id=4198), `438` zones, `50` iterations):
+Current benchmark output (Bun `v1.4.0`, Linux, [AMD Ryzen 7 PRO 5850U](https://www.cpubenchmark.net/cpu.php?id=4198), `438` zones, `50` iterations):
 
 ```md
-| CPU cold full list                    | `21.824 ms` |
-| CPU warm within-hour cache hit        | `0.017 ms`  |
-| CPU warm forced cache miss            | `0.718 ms`  |
-| Formatter cache size                  | `30`        |
-| RSS memory delta after cache creation | `256.0 KiB` |
+| CPU cold full list                    | `9.031 ms` |
+| CPU warm within-hour cache hit        | `0.013 ms` |
+| CPU warm forced cache miss            | `0.666 ms` |
+| Formatter cache size                  | `30`       |
+| RSS memory delta after cache creation | `2.88 MiB` |
 ```
 
-*Intl prewarm bootstrap adds a one-time per-process RSS overhead (about `17.40 MiB` on this machine), measured separately and excluded from the cache-creation delta above.*
+*Intl prewarm bootstrap adds a one-time per-process RSS overhead (about `1.50 MiB` on this machine), measured separately and excluded from the cache-creation delta above.*
 
 Reproduce locally:
 
 ```sh
-npm run benchcpu
-npm run benchmem
+bun run benchcpu
+bun run benchmem
 ```
 
 Both benchmark scripts print markdown table rows with padded heading and value columns (`| <heading> | <value> |`) for terminal readability and easy copy/paste into docs.
 
-Numbers vary by CPU, libc/ICU, Node version, and active system load.
+Numbers vary by CPU, libc/ICU, runtime version, and active system load.

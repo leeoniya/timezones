@@ -1,8 +1,8 @@
 import {
   TIME_ZONE_ABBREVIATIONS,
   type TimeZoneAbbreviationEntry,
-} from "./timezone-abbreviations.js";
-import { TIME_ZONE_ALIAS_GROUPS } from "./timezone-aliases.js";
+} from "./timezone-abbreviations.ts";
+import { TIME_ZONE_ALIAS_GROUPS } from "./timezone-aliases.ts";
 
 export interface TimeZoneInfo {
   /** IANA time zone identifier, for example "America/New_York". */
@@ -11,6 +11,8 @@ export interface TimeZoneInfo {
   abbr: string;
   /** UTC offset formatted as "+HH:MM" or "-HH:MM". */
   offset: string;
+  /** Canonical zone name when this entry is a non-canonical alias, for example "Asia/Kolkata" for "Asia/Calcutta". */
+  aliasOf?: string;
 }
 
 const DEFAULT_LOCALE = "en-US";
@@ -18,7 +20,7 @@ const DEFAULT_LOCALE = "en-US";
 const offsetFormatterCache = new Map<string, Intl.DateTimeFormat>();
 const GENERATED_TIME_ZONE_LOOKUP = TIME_ZONE_ABBREVIATIONS as Record<string, TimeZoneAbbreviationEntry>;
 const TIME_ZONE_LOOKUP = createTimeZoneLookup();
-const TIME_ZONE_ALIAS_SET = createAliasSet();
+const ALIAS_TO_CANONICAL = createAliasToCanonicalMap();
 const AVAILABLE_TIME_ZONES = Object.keys(TIME_ZONE_LOOKUP);
 const MS_PER_HOUR = 60 * 60 * 1000;
 const SHORT_OFFSET_RE = /\b(?:GMT|UTC)(?<sign>[+-])(?<hours>\d{1,2})(?::(?<minutes>\d{2}))?\b/;
@@ -31,13 +33,6 @@ let cacheTimeZones: TimeZoneInfo[] | undefined;
  */
 export function getAvailableTimeZones(): string[] {
   return AVAILABLE_TIME_ZONES;
-}
-
-/**
- * Returns true when a time zone is a non-canonical alias.
- */
-export function isAlias(timeZone: string): boolean {
-  return TIME_ZONE_ALIAS_SET.has(timeZone);
 }
 
 /**
@@ -75,11 +70,18 @@ function listGroupedTimeZones(
       getSingleStaticOffset(entry) ??
       getOffset(date, representatives.get(timeZone) ?? timeZone, formatterCache);
 
-    return {
+    const info: TimeZoneInfo = {
       name: timeZone,
       abbr: parseStoredAbbreviation(getStoredAbbreviation(entry, offset)),
       offset,
     };
+    const aliasOf = ALIAS_TO_CANONICAL.get(timeZone);
+
+    if (aliasOf !== undefined) {
+      info.aliasOf = aliasOf;
+    }
+
+    return info;
   });
 }
 
@@ -125,16 +127,16 @@ function addAliasEntries(lookup: Record<string, TimeZoneAbbreviationEntry>): voi
   }
 }
 
-function createAliasSet(): ReadonlySet<string> {
-  const aliases = new Set<string>();
+function createAliasToCanonicalMap(): ReadonlyMap<string, string> {
+  const aliasToCanonical = new Map<string, string>();
 
-  for (const [, ...groupAliases] of TIME_ZONE_ALIAS_GROUPS) {
+  for (const [canonicalTimeZone, ...groupAliases] of TIME_ZONE_ALIAS_GROUPS) {
     for (const alias of groupAliases) {
-      aliases.add(alias);
+      aliasToCanonical.set(alias, canonicalTimeZone);
     }
   }
 
-  return aliases;
+  return aliasToCanonical;
 }
 
 function createRepresentativeMap(): ReadonlyMap<string, string> {

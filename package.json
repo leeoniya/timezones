@@ -5,12 +5,18 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
   "scripts": {
-    "benchcpu": "node --experimental-strip-types scripts/benchcpu.ts",
-    "benchmem": "node --expose-gc --experimental-strip-types scripts/benchmem.ts",
-    "build": "tsc -p tsconfig.json",
-    "generate": "node --experimental-strip-types scripts/update-tzdb.ts && node --experimental-strip-types scripts/generate-abbreviations.ts",
-    "update-tzdb": "node --experimental-strip-types scripts/update-tzdb.ts",
+    "benchcpu": "bun scripts/benchcpu.ts",
+    "benchmem": "bun --expose-gc scripts/benchmem.ts",
+    "build": "rm -rf dist && bun build src/index.ts --format=esm --outfile=dist/index.js && bun build src/global.ts --format=iife --outfile=dist/index.iife.js && tsc -p tsconfig.json",
+    "generate": "bun scripts/update-tzdb.ts && node --experimental-strip-types scripts/generate-abbreviations.ts",
+    "update-tzdb": "bun scripts/update-tzdb.ts",
     "test": "node --experimental-strip-types --test test/timezones.test.ts"
   },
   "devDependencies": {

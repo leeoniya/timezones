@@ -3,7 +3,7 @@ import { Bench } from "tinybench";
 import {
   getAvailableTimeZones,
   getTimeZonesAt,
-} from "../dist/timezones.js";
+} from "../src/timezones.ts";
 
 const iterations = Number.parseInt(process.argv[2] ?? "50", 10);
 const timestamp = Date.UTC(2026, 5, 30, 12);

@@ -1,0 +1,640 @@
+(() => {
+  var __defProp = Object.defineProperty;
+  var __returnValue = (v) => v;
+  function __exportSetter(name, newValue) {
+    this[name] = __returnValue.bind(null, newValue);
+  }
+  var __export = (target, all) => {
+    for (var name in all)
+      __defProp(target, name, {
+        get: all[name],
+        enumerable: true,
+        configurable: true,
+        set: __exportSetter.bind(all, name)
+      });
+  };
+
+  // src/index.ts
+  var exports_src = {};
+  __export(exports_src, {
+    getTimeZonesAt: () => getTimeZonesAt
+  });
+
+  // src/timezone-abbreviations.ts
+  var TIME_ZONE_ABBREVIATIONS = {
+    "Africa/Abidjan": { "+00:00": "GMT/0" },
+    "Africa/Accra": { "+00:00": "GMT/0" },
+    "Africa/Addis_Ababa": { "+03:00": "EAT/0" },
+    "Africa/Algiers": { "+01:00": "CET/0" },
+    "Africa/Asmara": { "+03:00": "EAT/0" },
+    "Africa/Bamako": { "+00:00": "GMT/0" },
+    "Africa/Bangui": { "+01:00": "WAT/0" },
+    "Africa/Banjul": { "+00:00": "GMT/0" },
+    "Africa/Bissau": { "+00:00": "GMT/0" },
+    "Africa/Blantyre": { "+02:00": "CAT/0" },
+    "Africa/Brazzaville": { "+01:00": "WAT/0" },
+    "Africa/Bujumbura": { "+02:00": "CAT/0" },
+    "Africa/Cairo": { "+02:00": "EET/11", "+03:00": "EEST/11" },
+    "Africa/Casablanca": { "+01:00": "+01/1" },
+    "Africa/Ceuta": { "+01:00": "CET/6", "+02:00": "CEST/6" },
+    "Africa/Conakry": { "+00:00": "GMT/0" },
+    "Africa/Dakar": { "+00:00": "GMT/0" },
+    "Africa/Dar_es_Salaam": { "+03:00": "EAT/0" },
+    "Africa/Djibouti": { "+03:00": "EAT/0" },
+    "Africa/Douala": { "+01:00": "WAT/0" },
+    "Africa/El_Aaiun": { "+01:00": "+01/1" },
+    "Africa/Freetown": { "+00:00": "GMT/0" },
+    "Africa/Gaborone": { "+02:00": "CAT/0" },
+    "Africa/Harare": { "+02:00": "CAT/0" },
+    "Africa/Johannesburg": { "+02:00": "SAST/0" },
+    "Africa/Juba": { "+02:00": "CAT/0" },
+    "Africa/Kampala": { "+03:00": "EAT/0" },
+    "Africa/Khartoum": { "+02:00": "CAT/0" },
+    "Africa/Kigali": { "+02:00": "CAT/0" },
+    "Africa/Kinshasa": { "+01:00": "WAT/0" },
+    "Africa/Lagos": { "+01:00": "WAT/0" },
+    "Africa/Libreville": { "+01:00": "WAT/0" },
+    "Africa/Lome": { "+00:00": "GMT/0" },
+    "Africa/Luanda": { "+01:00": "WAT/0" },
+    "Africa/Lubumbashi": { "+02:00": "CAT/0" },
+    "Africa/Lusaka": { "+02:00": "CAT/0" },
+    "Africa/Malabo": { "+01:00": "WAT/0" },
+    "Africa/Maputo": { "+02:00": "CAT/0" },
+    "Africa/Maseru": { "+02:00": "SAST/0" },
+    "Africa/Mbabane": { "+02:00": "SAST/0" },
+    "Africa/Mogadishu": { "+03:00": "EAT/0" },
+    "Africa/Monrovia": { "+00:00": "GMT/0" },
+    "Africa/Nairobi": { "+03:00": "EAT/0" },
+    "Africa/Ndjamena": { "+01:00": "WAT/0" },
+    "Africa/Niamey": { "+01:00": "WAT/0" },
+    "Africa/Nouakchott": { "+00:00": "GMT/0" },
+    "Africa/Ouagadougou": { "+00:00": "GMT/0" },
+    "Africa/Porto-Novo": { "+01:00": "WAT/0" },
+    "Africa/Sao_Tome": { "+00:00": "GMT/0" },
+    "Africa/Tripoli": { "+02:00": "EET/0" },
+    "Africa/Tunis": { "+01:00": "CET/0" },
+    "Africa/Windhoek": { "+02:00": "CAT/0" },
+    "America/Adak": { "-10:00": "HST/2", "-09:00": "HDT/2" },
+    "America/Anchorage": { "-09:00": "AKST/2", "-08:00": "AKDT/2" },
+    "America/Anguilla": { "-04:00": "AST/0" },
+    "America/Antigua": { "-04:00": "AST/0" },
+    "America/Araguaina": { "-03:00": "-03/0" },
+    "America/Argentina/Buenos_Aires": { "-03:00": "-03/0" },
+    "America/Argentina/Catamarca": { "-03:00": "-03/0" },
+    "America/Argentina/Cordoba": { "-03:00": "-03/0" },
+    "America/Argentina/Jujuy": { "-03:00": "-03/0" },
+    "America/Argentina/La_Rioja": { "-03:00": "-03/0" },
+    "America/Argentina/Mendoza": { "-03:00": "-03/0" },
+    "America/Argentina/Rio_Gallegos": { "-03:00": "-03/0" },
+    "America/Argentina/Salta": { "-03:00": "-03/0" },
+    "America/Argentina/San_Juan": { "-03:00": "-03/0" },
+    "America/Argentina/San_Luis": { "-03:00": "-03/0" },
+    "America/Argentina/Tucuman": { "-03:00": "-03/0" },
+    "America/Argentina/Ushuaia": { "-03:00": "-03/0" },
+    "America/Aruba": { "-04:00": "AST/0" },
+    "America/Asuncion": { "-03:00": "-03/0" },
+    "America/Atikokan": { "-05:00": "EST/0" },
+    "America/Bahia": { "-03:00": "-03/0" },
+    "America/Bahia_Banderas": { "-06:00": "CST/0" },
+    "America/Barbados": { "-04:00": "AST/0" },
+    "America/Belem": { "-03:00": "-03/0" },
+    "America/Belize": { "-06:00": "CST/0" },
+    "America/Blanc-Sablon": { "-04:00": "AST/0" },
+    "America/Boa_Vista": { "-04:00": "-04/0" },
+    "America/Bogota": { "-05:00": "-05/0" },
+    "America/Boise": { "-07:00": "MST/2", "-06:00": "MDT/2" },
+    "America/Cambridge_Bay": { "-07:00": "MST/2", "-06:00": "MDT/2" },
+    "America/Campo_Grande": { "-04:00": "-04/0" },
+    "America/Cancun": { "-05:00": "EST/0" },
+    "America/Caracas": { "-04:00": "-04/0" },
+    "America/Cayenne": { "-03:00": "-03/0" },
+    "America/Cayman": { "-05:00": "EST/0" },
+    "America/Chicago": { "-06:00": "CST/2", "-05:00": "CDT/2" },
+    "America/Chihuahua": { "-06:00": "CST/0" },
+    "America/Ciudad_Juarez": { "-07:00": "MST/2", "-06:00": "MDT/2" },
+    "America/Costa_Rica": { "-06:00": "CST/0" },
+    "America/Coyhaique": { "-03:00": "-03/0" },
+    "America/Creston": { "-07:00": "MST/0" },
+    "America/Cuiaba": { "-04:00": "-04/0" },
+    "America/Curacao": { "-04:00": "AST/0" },
+    "America/Danmarkshavn": { "+00:00": "GMT/0" },
+    "America/Dawson": { "-07:00": "MST/0" },
+    "America/Dawson_Creek": { "-07:00": "MST/0" },
+    "America/Denver": { "-07:00": "MST/2", "-06:00": "MDT/2" },
+    "America/Detroit": { "-05:00": "EST/2", "-04:00": "EDT/2" },
+    "America/Dominica": { "-04:00": "AST/0" },
+    "America/Edmonton": { "-07:00": "MST/2", "-06:00": "MDT/2" },
+    "America/Eirunepe": { "-05:00": "-05/0" },
+    "America/El_Salvador": { "-06:00": "CST/0" },
+    "America/Fort_Nelson": { "-07:00": "MST/0" },
+    "America/Fortaleza": { "-03:00": "-03/0" },
+    "America/Glace_Bay": { "-04:00": "AST/2", "-03:00": "ADT/2" },
+    "America/Goose_Bay": { "-04:00": "AST/2", "-03:00": "ADT/2" },
+    "America/Grand_Turk": { "-05:00": "EST/2", "-04:00": "EDT/2" },
+    "America/Grenada": { "-04:00": "AST/0" },
+    "America/Guadeloupe": { "-04:00": "AST/0" },
+    "America/Guatemala": { "-06:00": "CST/0" },
+    "America/Guayaquil": { "-05:00": "-05/0" },
+    "America/Guyana": { "-04:00": "-04/0" },
+    "America/Halifax": { "-04:00": "AST/2", "-03:00": "ADT/2" },
+    "America/Havana": { "-05:00": "CST/2", "-04:00": "CDT/2" },
+    "America/Hermosillo": { "-07:00": "MST/0" },
+    "America/Indiana/Indianapolis": { "-05:00": "EST/2", "-04:00": "EDT/2" },
+    "America/Indiana/Knox": { "-06:00": "CST/2", "-05:00": "CDT/2" },
+    "America/Indiana/Marengo": { "-05:00": "EST/2", "-04:00": "EDT/2" },
+    "America/Indiana/Petersburg": { "-05:00": "EST/2", "-04:00": "EDT/2" },
+    "America/Indiana/Tell_City": { "-06:00": "CST/2", "-05:00": "CDT/2" },
+    "America/Indiana/Vevay": { "-05:00": "EST/2", "-04:00": "EDT/2" },
+    "America/Indiana/Vincennes": { "-05:00": "EST/2", "-04:00": "EDT/2" },
+    "America/Indiana/Winamac": { "-05:00": "EST/2", "-04:00": "EDT/2" },
+    "America/Inuvik": { "-07:00": "MST/2", "-06:00": "MDT/2" },
+    "America/Iqaluit": { "-05:00": "EST/2", "-04:00": "EDT/2" },
+    "America/Jamaica": { "-05:00": "EST/0" },
+    "America/Juneau": { "-09:00": "AKST/2", "-08:00": "AKDT/2" },
+    "America/Kentucky/Louisville": { "-05:00": "EST/2", "-04:00": "EDT/2" },
+    "America/Kentucky/Monticello": { "-05:00": "EST/2", "-04:00": "EDT/2" },
+    "America/Kralendijk": { "-04:00": "AST/0" },
+    "America/La_Paz": { "-04:00": "-04/0" },
+    "America/Lima": { "-05:00": "-05/0" },
+    "America/Los_Angeles": { "-08:00": "PST/2", "-07:00": "PDT/2" },
+    "America/Lower_Princes": { "-04:00": "AST/0" },
+    "America/Maceio": { "-03:00": "-03/0" },
+    "America/Managua": { "-06:00": "CST/0" },
+    "America/Manaus": { "-04:00": "-04/0" },
+    "America/Marigot": { "-04:00": "AST/0" },
+    "America/Martinique": { "-04:00": "AST/0" },
+    "America/Matamoros": { "-06:00": "CST/2", "-05:00": "CDT/2" },
+    "America/Mazatlan": { "-07:00": "MST/0" },
+    "America/Menominee": { "-06:00": "CST/2", "-05:00": "CDT/2" },
+    "America/Merida": { "-06:00": "CST/0" },
+    "America/Metlakatla": { "-09:00": "AKST/2", "-08:00": "AKDT/2" },
+    "America/Mexico_City": { "-06:00": "CST/0" },
+    "America/Miquelon": { "-03:00": "-03/2", "-02:00": "-02/2" },
+    "America/Moncton": { "-04:00": "AST/2", "-03:00": "ADT/2" },
+    "America/Monterrey": { "-06:00": "CST/0" },
+    "America/Montevideo": { "-03:00": "-03/0" },
+    "America/Montserrat": { "-04:00": "AST/0" },
+    "America/Nassau": { "-05:00": "EST/2", "-04:00": "EDT/2" },
+    "America/New_York": { "-05:00": "EST/2", "-04:00": "EDT/2" },
+    "America/Nome": { "-09:00": "AKST/2", "-08:00": "AKDT/2" },
+    "America/Noronha": { "-02:00": "-02/0" },
+    "America/North_Dakota/Beulah": { "-06:00": "CST/2", "-05:00": "CDT/2" },
+    "America/North_Dakota/Center": { "-06:00": "CST/2", "-05:00": "CDT/2" },
+    "America/North_Dakota/New_Salem": { "-06:00": "CST/2", "-05:00": "CDT/2" },
+    "America/Nuuk": { "-02:00": "-02/5", "-01:00": "-01/5" },
+    "America/Ojinaga": { "-06:00": "CST/2", "-05:00": "CDT/2" },
+    "America/Panama": { "-05:00": "EST/0" },
+    "America/Paramaribo": { "-03:00": "-03/0" },
+    "America/Phoenix": { "-07:00": "MST/0" },
+    "America/Port_of_Spain": { "-04:00": "AST/0" },
+    "America/Port-au-Prince": { "-05:00": "EST/2", "-04:00": "EDT/2" },
+    "America/Porto_Velho": { "-04:00": "-04/0" },
+    "America/Puerto_Rico": { "-04:00": "AST/0" },
+    "America/Punta_Arenas": { "-03:00": "-03/0" },
+    "America/Rankin_Inlet": { "-06:00": "CST/2", "-05:00": "CDT/2" },
+    "America/Recife": { "-03:00": "-03/0" },
+    "America/Regina": { "-06:00": "CST/0" },
+    "America/Resolute": { "-06:00": "CST/2", "-05:00": "CDT/2" },
+    "America/Rio_Branco": { "-05:00": "-05/0" },
+    "America/Santarem": { "-03:00": "-03/0" },
+    "America/Santiago": { "-03:00": "-03/8", "-04:00": "-04/8" },
+    "America/Santo_Domingo": { "-04:00": "AST/0" },
+    "America/Sao_Paulo": { "-03:00": "-03/0" },
+    "America/Scoresbysund": { "-02:00": "-02/5", "-01:00": "-01/5" },
+    "America/Sitka": { "-09:00": "AKST/2", "-08:00": "AKDT/2" },
+    "America/St_Barthelemy": { "-04:00": "AST/0" },
+    "America/St_Johns": { "-03:30": "NST/2", "-02:30": "NDT/2" },
+    "America/St_Kitts": { "-04:00": "AST/0" },
+    "America/St_Lucia": { "-04:00": "AST/0" },
+    "America/St_Thomas": { "-04:00": "AST/0" },
+    "America/St_Vincent": { "-04:00": "AST/0" },
+    "America/Swift_Current": { "-06:00": "CST/0" },
+    "America/Tegucigalpa": { "-06:00": "CST/0" },
+    "America/Thule": { "-04:00": "AST/2", "-03:00": "ADT/2" },
+    "America/Tijuana": { "-08:00": "PST/2", "-07:00": "PDT/2" },
+    "America/Toronto": { "-05:00": "EST/2", "-04:00": "EDT/2" },
+    "America/Tortola": { "-04:00": "AST/0" },
+    "America/Vancouver": { "-08:00": "PST/2", "-07:00": "PDT/2" },
+    "America/Whitehorse": { "-07:00": "MST/0" },
+    "America/Winnipeg": { "-06:00": "CST/2", "-05:00": "CDT/2" },
+    "America/Yakutat": { "-09:00": "AKST/2", "-08:00": "AKDT/2" },
+    "Antarctica/Casey": { "+08:00": "+08/0" },
+    "Antarctica/Davis": { "+07:00": "+07/0" },
+    "Antarctica/DumontDUrville": { "+10:00": "+10/0" },
+    "Antarctica/Macquarie": { "+11:00": "AEDT/10", "+10:00": "AEST/10" },
+    "Antarctica/Mawson": { "+05:00": "+05/0" },
+    "Antarctica/McMurdo": { "+13:00": "NZDT/9", "+12:00": "NZST/9" },
+    "Antarctica/Palmer": { "-03:00": "-03/0" },
+    "Antarctica/Rothera": { "-03:00": "-03/0" },
+    "Antarctica/Syowa": { "+03:00": "+03/0" },
+    "Antarctica/Troll": { "+00:00": "+00/6", "+02:00": "+02/6" },
+    "Antarctica/Vostok": { "+05:00": "+05/0" },
+    "Arctic/Longyearbyen": { "+01:00": "CET/6", "+02:00": "CEST/6" },
+    "Asia/Aden": { "+03:00": "+03/0" },
+    "Asia/Almaty": { "+05:00": "+05/0" },
+    "Asia/Amman": { "+03:00": "+03/0" },
+    "Asia/Anadyr": { "+12:00": "+12/0" },
+    "Asia/Aqtau": { "+05:00": "+05/0" },
+    "Asia/Aqtobe": { "+05:00": "+05/0" },
+    "Asia/Ashgabat": { "+05:00": "+05/0" },
+    "Asia/Atyrau": { "+05:00": "+05/0" },
+    "Asia/Baghdad": { "+03:00": "+03/0" },
+    "Asia/Bahrain": { "+03:00": "+03/0" },
+    "Asia/Baku": { "+04:00": "+04/0" },
+    "Asia/Bangkok": { "+07:00": "+07/0" },
+    "Asia/Barnaul": { "+07:00": "+07/0" },
+    "Asia/Beirut": { "+02:00": "EET/5", "+03:00": "EEST/5" },
+    "Asia/Bishkek": { "+06:00": "+06/0" },
+    "Asia/Brunei": { "+08:00": "+08/0" },
+    "Asia/Chita": { "+09:00": "+09/0" },
+    "Asia/Colombo": { "+05:30": "+0530/0" },
+    "Asia/Damascus": { "+03:00": "+03/0" },
+    "Asia/Dhaka": { "+06:00": "+06/0" },
+    "Asia/Dili": { "+09:00": "+09/0" },
+    "Asia/Dubai": { "+04:00": "+04/0" },
+    "Asia/Dushanbe": { "+05:00": "+05/0" },
+    "Asia/Famagusta": { "+02:00": "EET/6", "+03:00": "EEST/6" },
+    "Asia/Gaza": { "+02:00": "EET/4", "+03:00": "EEST/4" },
+    "Asia/Hebron": { "+02:00": "EET/4", "+03:00": "EEST/4" },
+    "Asia/Ho_Chi_Minh": { "+07:00": "+07/0" },
+    "Asia/Hong_Kong": { "+08:00": "HKT/0" },
+    "Asia/Hovd": { "+07:00": "+07/0" },
+    "Asia/Irkutsk": { "+08:00": "+08/0" },
+    "Asia/Jakarta": { "+07:00": "WIB/0" },
+    "Asia/Jayapura": { "+09:00": "WIT/0" },
+    "Asia/Jerusalem": { "+02:00": "IST/3", "+03:00": "IDT/3" },
+    "Asia/Kabul": { "+04:30": "+0430/0" },
+    "Asia/Kamchatka": { "+12:00": "+12/0" },
+    "Asia/Karachi": { "+05:00": "PKT/0" },
+    "Asia/Kathmandu": { "+05:45": "+0545/0" },
+    "Asia/Khandyga": { "+09:00": "+09/0" },
+    "Asia/Kolkata": { "+05:30": "IST/0" },
+    "Asia/Krasnoyarsk": { "+07:00": "+07/0" },
+    "Asia/Kuala_Lumpur": { "+08:00": "+08/0" },
+    "Asia/Kuching": { "+08:00": "+08/0" },
+    "Asia/Kuwait": { "+03:00": "+03/0" },
+    "Asia/Macau": { "+08:00": "CST/0" },
+    "Asia/Magadan": { "+11:00": "+11/0" },
+    "Asia/Makassar": { "+08:00": "WITA/0" },
+    "Asia/Manila": { "+08:00": "PST/0" },
+    "Asia/Muscat": { "+04:00": "+04/0" },
+    "Asia/Nicosia": { "+02:00": "EET/6", "+03:00": "EEST/6" },
+    "Asia/Novokuznetsk": { "+07:00": "+07/0" },
+    "Asia/Novosibirsk": { "+07:00": "+07/0" },
+    "Asia/Omsk": { "+06:00": "+06/0" },
+    "Asia/Oral": { "+05:00": "+05/0" },
+    "Asia/Phnom_Penh": { "+07:00": "+07/0" },
+    "Asia/Pontianak": { "+07:00": "WIB/0" },
+    "Asia/Pyongyang": { "+09:00": "KST/0" },
+    "Asia/Qatar": { "+03:00": "+03/0" },
+    "Asia/Qostanay": { "+05:00": "+05/0" },
+    "Asia/Qyzylorda": { "+05:00": "+05/0" },
+    "Asia/Riyadh": { "+03:00": "+03/0" },
+    "Asia/Sakhalin": { "+11:00": "+11/0" },
+    "Asia/Samarkand": { "+05:00": "+05/0" },
+    "Asia/Seoul": { "+09:00": "KST/0" },
+    "Asia/Shanghai": { "+08:00": "CST/0" },
+    "Asia/Singapore": { "+08:00": "+08/0" },
+    "Asia/Srednekolymsk": { "+11:00": "+11/0" },
+    "Asia/Taipei": { "+08:00": "CST/0" },
+    "Asia/Tashkent": { "+05:00": "+05/0" },
+    "Asia/Tbilisi": { "+04:00": "+04/0" },
+    "Asia/Tehran": { "+03:30": "+0330/0" },
+    "Asia/Thimphu": { "+06:00": "+06/0" },
+    "Asia/Tokyo": { "+09:00": "JST/0" },
+    "Asia/Tomsk": { "+07:00": "+07/0" },
+    "Asia/Ulaanbaatar": { "+08:00": "+08/0" },
+    "Asia/Urumqi": { "+06:00": "+06/0" },
+    "Asia/Ust-Nera": { "+10:00": "+10/0" },
+    "Asia/Vientiane": { "+07:00": "+07/0" },
+    "Asia/Vladivostok": { "+10:00": "+10/0" },
+    "Asia/Yakutsk": { "+09:00": "+09/0" },
+    "Asia/Yangon": { "+06:30": "+0630/0" },
+    "Asia/Yekaterinburg": { "+05:00": "+05/0" },
+    "Asia/Yerevan": { "+04:00": "+04/0" },
+    "Atlantic/Azores": { "-01:00": "-01/6", "+00:00": "+00/6" },
+    "Atlantic/Bermuda": { "-04:00": "AST/2", "-03:00": "ADT/2" },
+    "Atlantic/Canary": { "+00:00": "WET/6", "+01:00": "WEST/6" },
+    "Atlantic/Cape_Verde": { "-01:00": "-01/0" },
+    "Atlantic/Faroe": { "+00:00": "WET/6", "+01:00": "WEST/6" },
+    "Atlantic/Madeira": { "+00:00": "WET/6", "+01:00": "WEST/6" },
+    "Atlantic/Reykjavik": { "+00:00": "GMT/0" },
+    "Atlantic/South_Georgia": { "-02:00": "-02/0" },
+    "Atlantic/St_Helena": { "+00:00": "GMT/0" },
+    "Atlantic/Stanley": { "-03:00": "-03/0" },
+    "Australia/Adelaide": { "+10:30": "ACDT/10", "+09:30": "ACST/10" },
+    "Australia/Brisbane": { "+10:00": "AEST/0" },
+    "Australia/Broken_Hill": { "+10:30": "ACDT/10", "+09:30": "ACST/10" },
+    "Australia/Darwin": { "+09:30": "ACST/0" },
+    "Australia/Eucla": { "+08:45": "+0845/0" },
+    "Australia/Hobart": { "+11:00": "AEDT/10", "+10:00": "AEST/10" },
+    "Australia/Lindeman": { "+10:00": "AEST/0" },
+    "Australia/Lord_Howe": { "+11:00": "+11/10", "+10:30": "+1030/10" },
+    "Australia/Melbourne": { "+11:00": "AEDT/10", "+10:00": "AEST/10" },
+    "Australia/Perth": { "+08:00": "AWST/0" },
+    "Australia/Sydney": { "+11:00": "AEDT/10", "+10:00": "AEST/10" },
+    "Europe/Amsterdam": { "+01:00": "CET/6", "+02:00": "CEST/6" },
+    "Europe/Andorra": { "+01:00": "CET/6", "+02:00": "CEST/6" },
+    "Europe/Astrakhan": { "+04:00": "+04/0" },
+    "Europe/Athens": { "+02:00": "EET/6", "+03:00": "EEST/6" },
+    "Europe/Belgrade": { "+01:00": "CET/6", "+02:00": "CEST/6" },
+    "Europe/Berlin": { "+01:00": "CET/6", "+02:00": "CEST/6" },
+    "Europe/Bratislava": { "+01:00": "CET/6", "+02:00": "CEST/6" },
+    "Europe/Brussels": { "+01:00": "CET/6", "+02:00": "CEST/6" },
+    "Europe/Bucharest": { "+02:00": "EET/6", "+03:00": "EEST/6" },
+    "Europe/Budapest": { "+01:00": "CET/6", "+02:00": "CEST/6" },
+    "Europe/Busingen": { "+01:00": "CET/6", "+02:00": "CEST/6" },
+    "Europe/Chisinau": { "+02:00": "EET/6", "+03:00": "EEST/6" },
+    "Europe/Copenhagen": { "+01:00": "CET/6", "+02:00": "CEST/6" },
+    "Europe/Dublin": { "+00:00": "GMT/6", "+01:00": "IST/6" },
+    "Europe/Gibraltar": { "+01:00": "CET/6", "+02:00": "CEST/6" },
+    "Europe/Guernsey": { "+00:00": "GMT/6", "+01:00": "BST/6" },
+    "Europe/Helsinki": { "+02:00": "EET/6", "+03:00": "EEST/6" },
+    "Europe/Isle_of_Man": { "+00:00": "GMT/6", "+01:00": "BST/6" },
+    "Europe/Istanbul": { "+03:00": "+03/0" },
+    "Europe/Jersey": { "+00:00": "GMT/6", "+01:00": "BST/6" },
+    "Europe/Kaliningrad": { "+02:00": "EET/0" },
+    "Europe/Kirov": { "+03:00": "MSK/0" },
+    "Europe/Kyiv": { "+02:00": "EET/6", "+03:00": "EEST/6" },
+    "Europe/Lisbon": { "+00:00": "WET/6", "+01:00": "WEST/6" },
+    "Europe/Ljubljana": { "+01:00": "CET/6", "+02:00": "CEST/6" },
+    "Europe/London": { "+00:00": "GMT/6", "+01:00": "BST/6" },
+    "Europe/Luxembourg": { "+01:00": "CET/6", "+02:00": "CEST/6" },
+    "Europe/Madrid": { "+01:00": "CET/6", "+02:00": "CEST/6" },
+    "Europe/Malta": { "+01:00": "CET/6", "+02:00": "CEST/6" },
+    "Europe/Mariehamn": { "+02:00": "EET/6", "+03:00": "EEST/6" },
+    "Europe/Minsk": { "+03:00": "+03/0" },
+    "Europe/Monaco": { "+01:00": "CET/6", "+02:00": "CEST/6" },
+    "Europe/Moscow": { "+03:00": "MSK/0" },
+    "Europe/Oslo": { "+01:00": "CET/6", "+02:00": "CEST/6" },
+    "Europe/Paris": { "+01:00": "CET/6", "+02:00": "CEST/6" },
+    "Europe/Podgorica": { "+01:00": "CET/6", "+02:00": "CEST/6" },
+    "Europe/Prague": { "+01:00": "CET/6", "+02:00": "CEST/6" },
+    "Europe/Riga": { "+02:00": "EET/6", "+03:00": "EEST/6" },
+    "Europe/Rome": { "+01:00": "CET/6", "+02:00": "CEST/6" },
+    "Europe/Samara": { "+04:00": "+04/0" },
+    "Europe/San_Marino": { "+01:00": "CET/6", "+02:00": "CEST/6" },
+    "Europe/Sarajevo": { "+01:00": "CET/6", "+02:00": "CEST/6" },
+    "Europe/Saratov": { "+04:00": "+04/0" },
+    "Europe/Simferopol": { "+03:00": "MSK/0" },
+    "Europe/Skopje": { "+01:00": "CET/6", "+02:00": "CEST/6" },
+    "Europe/Sofia": { "+02:00": "EET/6", "+03:00": "EEST/6" },
+    "Europe/Stockholm": { "+01:00": "CET/6", "+02:00": "CEST/6" },
+    "Europe/Tallinn": { "+02:00": "EET/6", "+03:00": "EEST/6" },
+    "Europe/Tirane": { "+01:00": "CET/6", "+02:00": "CEST/6" },
+    "Europe/Ulyanovsk": { "+04:00": "+04/0" },
+    "Europe/Vaduz": { "+01:00": "CET/6", "+02:00": "CEST/6" },
+    "Europe/Vatican": { "+01:00": "CET/6", "+02:00": "CEST/6" },
+    "Europe/Vienna": { "+01:00": "CET/6", "+02:00": "CEST/6" },
+    "Europe/Vilnius": { "+02:00": "EET/6", "+03:00": "EEST/6" },
+    "Europe/Volgograd": { "+03:00": "MSK/0" },
+    "Europe/Warsaw": { "+01:00": "CET/6", "+02:00": "CEST/6" },
+    "Europe/Zagreb": { "+01:00": "CET/6", "+02:00": "CEST/6" },
+    "Europe/Zurich": { "+01:00": "CET/6", "+02:00": "CEST/6" },
+    "Indian/Antananarivo": { "+03:00": "EAT/0" },
+    "Indian/Chagos": { "+06:00": "+06/0" },
+    "Indian/Christmas": { "+07:00": "+07/0" },
+    "Indian/Cocos": { "+06:30": "+0630/0" },
+    "Indian/Comoro": { "+03:00": "EAT/0" },
+    "Indian/Kerguelen": { "+05:00": "+05/0" },
+    "Indian/Mahe": { "+04:00": "+04/0" },
+    "Indian/Maldives": { "+05:00": "+05/0" },
+    "Indian/Mauritius": { "+04:00": "+04/0" },
+    "Indian/Mayotte": { "+03:00": "EAT/0" },
+    "Indian/Reunion": { "+04:00": "+04/0" },
+    "Pacific/Apia": { "+13:00": "+13/0" },
+    "Pacific/Auckland": { "+13:00": "NZDT/9", "+12:00": "NZST/9" },
+    "Pacific/Bougainville": { "+11:00": "+11/0" },
+    "Pacific/Chatham": { "+13:45": "+1345/9", "+12:45": "+1245/9" },
+    "Pacific/Chuuk": { "+10:00": "+10/0" },
+    "Pacific/Easter": { "-05:00": "-05/7", "-06:00": "-06/7" },
+    "Pacific/Efate": { "+11:00": "+11/0" },
+    "Pacific/Fakaofo": { "+13:00": "+13/0" },
+    "Pacific/Fiji": { "+12:00": "+12/0" },
+    "Pacific/Funafuti": { "+12:00": "+12/0" },
+    "Pacific/Galapagos": { "-06:00": "-06/0" },
+    "Pacific/Gambier": { "-09:00": "-09/0" },
+    "Pacific/Guadalcanal": { "+11:00": "+11/0" },
+    "Pacific/Guam": { "+10:00": "ChST/0" },
+    "Pacific/Honolulu": { "-10:00": "HST/0" },
+    "Pacific/Kanton": { "+13:00": "+13/0" },
+    "Pacific/Kiritimati": { "+14:00": "+14/0" },
+    "Pacific/Kosrae": { "+11:00": "+11/0" },
+    "Pacific/Kwajalein": { "+12:00": "+12/0" },
+    "Pacific/Majuro": { "+12:00": "+12/0" },
+    "Pacific/Marquesas": { "-09:30": "-0930/0" },
+    "Pacific/Midway": { "-11:00": "SST/0" },
+    "Pacific/Nauru": { "+12:00": "+12/0" },
+    "Pacific/Niue": { "-11:00": "-11/0" },
+    "Pacific/Norfolk": { "+12:00": "+12/10", "+11:00": "+11/10" },
+    "Pacific/Noumea": { "+11:00": "+11/0" },
+    "Pacific/Pago_Pago": { "-11:00": "SST/0" },
+    "Pacific/Palau": { "+09:00": "+09/0" },
+    "Pacific/Pitcairn": { "-08:00": "-08/0" },
+    "Pacific/Pohnpei": { "+11:00": "+11/0" },
+    "Pacific/Port_Moresby": { "+10:00": "+10/0" },
+    "Pacific/Rarotonga": { "-10:00": "-10/0" },
+    "Pacific/Saipan": { "+10:00": "ChST/0" },
+    "Pacific/Tahiti": { "-10:00": "-10/0" },
+    "Pacific/Tarawa": { "+12:00": "+12/0" },
+    "Pacific/Tongatapu": { "+13:00": "+13/0" },
+    "Pacific/Wake": { "+12:00": "+12/0" },
+    "Pacific/Wallis": { "+12:00": "+12/0" },
+    UTC: { "+00:00": "UTC/0" }
+  };
+
+  // src/timezone-aliases.ts
+  var TIME_ZONE_ALIAS_GROUPS = [
+    ["Africa/Addis_Ababa", "Africa/Asmera"],
+    ["America/Argentina/Buenos_Aires", "America/Buenos_Aires"],
+    ["America/Argentina/Catamarca", "America/Catamarca"],
+    ["America/Argentina/Cordoba", "America/Cordoba"],
+    ["America/Argentina/Jujuy", "America/Jujuy"],
+    ["America/Argentina/Mendoza", "America/Mendoza"],
+    ["America/Atikokan", "America/Coral_Harbour"],
+    ["America/Indiana/Indianapolis", "America/Indianapolis"],
+    ["America/Kentucky/Louisville", "America/Louisville"],
+    ["America/Nuuk", "America/Godthab"],
+    ["Asia/Ho_Chi_Minh", "Asia/Saigon"],
+    ["Asia/Kathmandu", "Asia/Katmandu"],
+    ["Asia/Kolkata", "Asia/Calcutta"],
+    ["Asia/Ulaanbaatar", "Asia/Choibalsan"],
+    ["Asia/Yangon", "Asia/Rangoon"],
+    ["Atlantic/Faroe", "Atlantic/Faeroe"],
+    ["Europe/Kyiv", "Europe/Kiev"],
+    ["Pacific/Guadalcanal", "Pacific/Ponape"],
+    ["Pacific/Kanton", "Pacific/Enderbury"]
+  ];
+
+  // src/timezones.ts
+  var DEFAULT_LOCALE = "en-US";
+  var offsetFormatterCache = new Map;
+  var GENERATED_TIME_ZONE_LOOKUP = TIME_ZONE_ABBREVIATIONS;
+  var TIME_ZONE_LOOKUP = createTimeZoneLookup();
+  var ALIAS_TO_CANONICAL = createAliasToCanonicalMap();
+  var AVAILABLE_TIME_ZONES = Object.keys(TIME_ZONE_LOOKUP);
+  var MS_PER_HOUR = 60 * 60 * 1000;
+  var SHORT_OFFSET_RE = /\b(?:GMT|UTC)(?<sign>[+-])(?<hours>\d{1,2})(?::(?<minutes>\d{2}))?\b/;
+  var representatives;
+  var cacheHour;
+  var cacheTimeZones;
+  function getTimeZonesAt(timestamp) {
+    const hourBucket = Math.floor(timestamp / MS_PER_HOUR);
+    if (cacheHour === hourBucket && cacheTimeZones) {
+      return cacheTimeZones;
+    }
+    const date = new Date(timestamp);
+    representatives ??= createRepresentativeMap();
+    const timeZones = listGroupedTimeZones(date, representatives, offsetFormatterCache);
+    cacheHour = hourBucket;
+    cacheTimeZones = timeZones;
+    return timeZones;
+  }
+  function listGroupedTimeZones(date, representatives2, formatterCache) {
+    return AVAILABLE_TIME_ZONES.map((timeZone) => {
+      const entry = TIME_ZONE_LOOKUP[timeZone];
+      const offset = getSingleStaticOffset(entry) ?? getOffset(date, representatives2.get(timeZone) ?? timeZone, formatterCache);
+      const info = {
+        name: timeZone,
+        abbr: parseStoredAbbreviation(getStoredAbbreviation(entry, offset)),
+        offset
+      };
+      const aliasOf = ALIAS_TO_CANONICAL.get(timeZone);
+      if (aliasOf !== undefined) {
+        info.aliasOf = aliasOf;
+      }
+      return info;
+    });
+  }
+  function createTimeZoneLookup() {
+    const unsortedLookup = {};
+    for (const timeZone in GENERATED_TIME_ZONE_LOOKUP) {
+      unsortedLookup[timeZone] = GENERATED_TIME_ZONE_LOOKUP[timeZone];
+    }
+    addAliasEntries(unsortedLookup);
+    const sortedLookup = {};
+    for (const timeZone of Object.keys(unsortedLookup).sort((timeZoneA, timeZoneB) => {
+      return timeZoneA.localeCompare(timeZoneB);
+    })) {
+      sortedLookup[timeZone] = unsortedLookup[timeZone];
+    }
+    return sortedLookup;
+  }
+  function addAliasEntries(lookup) {
+    for (const [canonicalTimeZone, ...aliases] of TIME_ZONE_ALIAS_GROUPS) {
+      const source = lookup[canonicalTimeZone] ? canonicalTimeZone : aliases.find((timeZone) => lookup[timeZone]);
+      if (!source) {
+        continue;
+      }
+      for (const alias of aliases) {
+        if (!lookup[alias]) {
+          lookup[alias] = lookup[source];
+        }
+      }
+      if (!lookup[canonicalTimeZone]) {
+        lookup[canonicalTimeZone] = lookup[source];
+      }
+    }
+  }
+  function createAliasToCanonicalMap() {
+    const aliasToCanonical = new Map;
+    for (const [canonicalTimeZone, ...groupAliases] of TIME_ZONE_ALIAS_GROUPS) {
+      for (const alias of groupAliases) {
+        aliasToCanonical.set(alias, canonicalTimeZone);
+      }
+    }
+    return aliasToCanonical;
+  }
+  function createRepresentativeMap() {
+    const groups = new Map;
+    const representatives2 = new Map;
+    for (const [timeZone, entry] of Object.entries(TIME_ZONE_LOOKUP)) {
+      if (Object.keys(entry).length <= 1) {
+        continue;
+      }
+      const key = JSON.stringify(entry);
+      const group = groups.get(key);
+      if (group) {
+        group.push(timeZone);
+      } else {
+        groups.set(key, [timeZone]);
+      }
+    }
+    for (const zones of groups.values()) {
+      const [representative, ...aliases] = zones;
+      if (representative) {
+        for (const alias of aliases) {
+          representatives2.set(alias, representative);
+        }
+      }
+    }
+    return representatives2;
+  }
+  function getSingleStaticOffset(entry) {
+    const offsets = Object.keys(entry);
+    if (offsets.length !== 1) {
+      return;
+    }
+    const firstOffset = offsets[0];
+    return entry[firstOffset].endsWith("/0") ? firstOffset : undefined;
+  }
+  function getOffset(date, timeZone, formatterCache) {
+    const formatter = getOffsetFormatter(timeZone, formatterCache);
+    const formatted = formatter.format(date);
+    return parseShortOffset(formatted);
+  }
+  function getOffsetFormatter(timeZone, formatterCache) {
+    const cached = formatterCache.get(timeZone);
+    if (cached) {
+      return cached;
+    }
+    const formatter = new Intl.DateTimeFormat(DEFAULT_LOCALE, {
+      timeZone,
+      timeZoneName: "shortOffset",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hourCycle: "h23"
+    });
+    formatterCache.set(timeZone, formatter);
+    return formatter;
+  }
+  function parseShortOffset(formatted) {
+    const match = SHORT_OFFSET_RE.exec(formatted);
+    if (!match?.groups) {
+      if (/\b(?:GMT|UTC)\b/.test(formatted)) {
+        return "+00:00";
+      }
+      throw new Error(`Unable to parse UTC offset from "${formatted}".`);
+    }
+    if (match.groups.hours === "0" && !match.groups.minutes) {
+      return "+00:00";
+    }
+    const sign = match.groups.sign;
+    const hours = match.groups.hours.padStart(2, "0");
+    const minutes = (match.groups.minutes ?? "0").padStart(2, "0");
+    return `${sign}${hours}:${minutes}`;
+  }
+  function getStoredAbbreviation(entry, offset) {
+    const exact = entry[offset];
+    if (exact) {
+      return exact;
+    }
+    for (const key of Object.keys(entry)) {
+      const fallback = entry[key];
+      if (fallback) {
+        return fallback;
+      }
+    }
+    return "";
+  }
+  function parseStoredAbbreviation(value) {
+    const separatorIndex = value.lastIndexOf("/");
+    return value.slice(0, separatorIndex);
+  }
+  // src/global.ts
+  globalThis.timezones = exports_src;
+})();

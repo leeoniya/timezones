@@ -1,14 +1,16 @@
 {
   "compilerOptions": {
+    "allowImportingTsExtensions": true,
     "declaration": true,
-    "lib": ["ES2022", "ES2022.Intl"],
+    "emitDeclarationOnly": true,
+    "lib": ["ES2022"],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "outDir": "dist",
     "rootDir": "src",
     "strict": true,
     "target": "ES2022",
-    "types": ["node"]
+    "types": []
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts"]
 }

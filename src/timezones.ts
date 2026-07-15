@@ -21,6 +21,7 @@ const TIME_ZONE_LOOKUP = createTimeZoneLookup();
 const TIME_ZONE_ALIAS_SET = createAliasSet();
 const AVAILABLE_TIME_ZONES = Object.keys(TIME_ZONE_LOOKUP);
 const MS_PER_HOUR = 60 * 60 * 1000;
+const SHORT_OFFSET_RE = /\b(?:GMT|UTC)(?<sign>[+-])(?<hours>\d{1,2})(?::(?<minutes>\d{2}))?\b/;
 let representatives: ReadonlyMap<string, string> | undefined;
 let cacheHour: number | undefined;
 let cacheTimeZones: TimeZoneInfo[] | undefined;
@@ -67,28 +68,19 @@ function listGroupedTimeZones(
   representatives: ReadonlyMap<string, string>,
   formatterCache: Map<string, Intl.DateTimeFormat>,
 ): TimeZoneInfo[] {
-  return getAvailableTimeZones().map((timeZone) => {
+  return AVAILABLE_TIME_ZONES.map((timeZone) => {
     const entry = TIME_ZONE_LOOKUP[timeZone]!;
 
     const offset =
       getSingleStaticOffset(entry) ??
-      getOffset(date, getRepresentative(representatives, timeZone), formatterCache);
+      getOffset(date, representatives.get(timeZone) ?? timeZone, formatterCache);
 
-    return createTimeZoneInfo(timeZone, offset);
+    return {
+      name: timeZone,
+      abbr: parseStoredAbbreviation(getStoredAbbreviation(entry, offset)),
+      offset,
+    };
   });
-}
-
-function createTimeZoneInfo(
-  timeZone: string,
-  offset: string,
-): TimeZoneInfo {
-  const entry = TIME_ZONE_LOOKUP[timeZone]!;
-
-  return {
-    name: timeZone,
-    abbr: parseStoredAbbreviation(getStoredAbbreviation(entry, offset)),
-    offset,
-  };
 }
 
 function createTimeZoneLookup(): Record<string, TimeZoneAbbreviationEntry> {
@@ -145,8 +137,7 @@ function createAliasSet(): ReadonlySet<string> {
   return aliases;
 }
 
-function createRepresentativeMap(
-): ReadonlyMap<string, string> {
+function createRepresentativeMap(): ReadonlyMap<string, string> {
   const groups = new Map<string, string[]>();
   const representatives = new Map<string, string>();
 
@@ -176,10 +167,6 @@ function createRepresentativeMap(
   }
 
   return representatives;
-}
-
-function getRepresentative(representatives: ReadonlyMap<string, string>, timeZone: string): string {
-  return representatives.get(timeZone) ?? timeZone;
 }
 
 function getSingleStaticOffset(entry: TimeZoneAbbreviationEntry): string | undefined {
@@ -233,9 +220,7 @@ function getOffsetFormatter(
 }
 
 function parseShortOffset(formatted: string): string {
-  const match = /\b(?:GMT|UTC)(?<sign>[+-])(?<hours>\d{1,2})(?::(?<minutes>\d{2}))?\b/.exec(
-    formatted,
-  );
+  const match = SHORT_OFFSET_RE.exec(formatted);
 
   if (!match?.groups) {
     if (/\b(?:GMT|UTC)\b/.test(formatted)) {
@@ -250,14 +235,10 @@ function parseShortOffset(formatted: string): string {
   }
 
   const sign = match.groups.sign;
-  const hours = Number(match.groups.hours);
-  const minutes = Number(match.groups.minutes ?? "0");
+  const hours = match.groups.hours.padStart(2, "0");
+  const minutes = (match.groups.minutes ?? "0").padStart(2, "0");
 
-  return `${sign}${pad2(hours)}:${pad2(minutes)}`;
-}
-
-function pad2(value: number): string {
-  return String(value).padStart(2, "0");
+  return `${sign}${hours}:${minutes}`;
 }
 
 function getStoredAbbreviation(entry: TimeZoneAbbreviationEntry, offset: string): string {
